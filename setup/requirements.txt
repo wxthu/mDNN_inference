@@ -1,4 +1,4 @@
-python>=2.7.0
+# python>=2.7.0
 jinja2>=2.10
 pyyaml>=3.12
 sh>=1.12.14

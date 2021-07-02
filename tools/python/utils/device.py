@@ -25,7 +25,6 @@ import tempfile
 
 from utils import util
 
-
 def execute(cmd, verbose=True):
     if verbose:
         print("CMD> %s" % cmd)
@@ -35,7 +34,6 @@ def execute(cmd, verbose=True):
                          stderr=subprocess.STDOUT,
                          stdin=subprocess.PIPE,
                          universal_newlines=True)
-
     if not verbose:
         # use p.communicate instead of p.wait to avoid such situation:
         # pipe is filled and the child process is blocked.
