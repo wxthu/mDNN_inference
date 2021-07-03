@@ -36,6 +36,7 @@ from utils.util import mace_check
 import run_target
 import validate
 
+from multiprocessing import Process
 
 """
 Tool for mace_run:
@@ -82,15 +83,25 @@ def run_models(flags, args):
             continue
         run_models_for_device(flags, args, dev)
 
-
 def run_models_for_device(flags, args, dev):
     conf = config_parser.parse(flags.config)
+    ps = []
     for name, model_conf in conf["models"].items():
         if not flags.model_name or name == flags.model_name:
-            MaceLogger.info("Run model %s" % name)
-            model_conf = config_parser.normalize_model_config(model_conf)
-            run_model_for_device(flags, args, dev, name, model_conf)
-
+            p = Process(target=model_process, args=(flags, args, dev, name, model_conf))
+            p.start()
+            ps.append(p)
+            # MaceLogger.info("Run model %s" % name)
+            # model_conf = config_parser.normalize_model_config(model_conf)
+            # run_model_for_device(flags, args, dev, name, model_conf)
+    for p in ps:
+        p.join()
+            
+def model_process(flags, args, dev, name, model_conf):
+    MaceLogger.info("Run model %s" % name)
+    MaceLogger.info("Current process is : %s" % os.getpid())
+    model_conf = config_parser.normalize_model_config(model_conf)
+    run_model_for_device(flags, args, dev, name, model_conf)
 
 def run_model_for_device(flags, args, dev, model_name, model_conf):
     target_abi = flags.target_abi
