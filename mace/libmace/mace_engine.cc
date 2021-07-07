@@ -139,6 +139,7 @@ MaceStatus MaceEngine::Impl::Run(
     const std::map<std::string, MaceTensor> &inputs,
     std::map<std::string, MaceTensor> *outputs,
     RunMetadata *run_metadata) {
+  LOG(INFO) << "Run Impl Engine ...";
   return engine_->Forward(inputs, outputs, run_metadata);
 }
 
@@ -203,11 +204,13 @@ MaceStatus MaceEngine::Init(const NetDef *net_def,
 MaceStatus MaceEngine::Run(const std::map<std::string, MaceTensor> &inputs,
                            std::map<std::string, MaceTensor> *outputs,
                            RunMetadata *run_metadata) {
+  LOG(INFO) << "Run Metadata Engine ...";
   return impl_->Run(inputs, outputs, run_metadata);
 }
 
 MaceStatus MaceEngine::Run(const std::map<std::string, MaceTensor> &inputs,
                            std::map<std::string, MaceTensor> *outputs) {
+  LOG(INFO) << "Run Engine Success !";
   return impl_->Run(inputs, outputs, nullptr);
 }
 
@@ -243,7 +246,7 @@ MaceStatus CreateMaceEngineFromProto(
     bool *model_data_unused, MaceEngine *tutor,
     bool fake_warmup) {
   VLOG(1) << "Create MaceEngine from model graph proto and weights data";
-
+  
   if (engine == nullptr) {
     return MaceStatus::MACE_INVALID_ARGS;
   }
