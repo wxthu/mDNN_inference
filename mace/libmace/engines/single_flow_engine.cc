@@ -139,6 +139,7 @@ MaceStatus SingleFlowEngine::Run(
     const std::map<std::string, MaceTensor> &inputs,
     std::map<std::string, MaceTensor> *outputs,
     RunMetadata *run_metadata) {
+  LOG(INFO) << "SingleFlow forward run ...";
   return single_flow_->Run(inputs, outputs, run_metadata);
 }
 

@@ -85,6 +85,7 @@ MaceStatus SerialEngine::Run(
     const std::map<std::string, MaceTensor> &inputs,
     std::map<std::string, MaceTensor> *outputs,
     RunMetadata *run_metadata) {
+  LOG(INFO) << "Serial Engine run ...";
   // replace the input and output tensors
   for (auto iter = inputs.begin(); iter != inputs.end(); ++iter) {
     (*(run_helper_[iter->first]))[iter->first] = iter->second;
@@ -94,6 +95,7 @@ MaceStatus SerialEngine::Run(
   }
 
   auto flow_num = flows_.size();
+  LOG(INFO) << "Flow run and nums of flow is : " << flow_num;
   for (size_t i = 0; i < flow_num; ++i) {
     auto *flow = flows_[i].get();
     VLOG(1) << "start run flow: " << flow->GetName();

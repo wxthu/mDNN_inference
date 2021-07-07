@@ -433,6 +433,7 @@ bool RunModel(const std::string &model_name,
       LOG(INFO) << "Please specify model graph file and model data file";
       return false;
     }
+    LOG(INFO) << "Create MaceEngine from model graph proto and weights data";
     create_engine_status =
         CreateMaceEngineFromProto(reinterpret_cast<const unsigned char *>(
                                       model_graph_data->data()),
@@ -551,6 +552,7 @@ bool RunModel(const std::string &model_name,
     while (true) {
       int64_t t3 = NowMicros();
       MaceStatus warmup_status = engine->Run(inputs, &outputs);
+      LOG(INFO) << "Warm up finished";
       if (warmup_status != MaceStatus::MACE_SUCCESS) {
         LOG(ERROR) << "Warmup runtime error, retry ... errcode: "
                    << warmup_status.information();
