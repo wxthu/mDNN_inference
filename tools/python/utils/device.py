@@ -192,7 +192,7 @@ class AndroidDevice(Device):
 
         execute("adb -s %s push %s %s" % (sn, lib_file, install_dir), False)
 
-    def run(self, target):
+    def run(self, target, priority = 10):
         tmpdirname = tempfile.mkdtemp()
         cmd_file_path = tmpdirname + "/cmd.sh"
         with open(cmd_file_path, "w") as cmd_file:
@@ -202,7 +202,7 @@ class AndroidDevice(Device):
                                           cmd_file_path,
                                           target_dir))
 
-        out = execute("adb -s %s shell sh %s" % (self._device_id,
+        out = execute("adb -s %s shell nice -n %s sh %s" % (self._device_id, priority,
                                                  target_dir + "/cmd.sh"))
         # May have false positive using the following error word
         for line in out.split("\n")[:-10]:

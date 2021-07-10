@@ -34,13 +34,13 @@ from utils import config_parser
 from utils import util
 
 
-def run_target(target_abi, install_dir, target_obj, dev):
+def run_target(target_abi, install_dir, target_obj, dev, proirity = 10):
     # reinstall target
     print("Install target from %s to %s" % (target_obj.path, install_dir))
     device_target = dev.install(target_obj, install_dir)
     print(device_target)
 
-    dev.run(device_target)
+    dev.run(device_target, proirity)
 
 
 def run_target_origin(target_abi, install_dir, target_obj, device_ids="all"):

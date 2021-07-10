@@ -85,18 +85,30 @@ def run_models(flags, args):
 
 def run_models_for_device(flags, args, dev):
     conf = config_parser.parse(flags.config)
+    process_queue = []
+    counts = 0
     for name, model_conf in conf["models"].items():
-        if not flags.model_name or name == flags.model_name:
+        prior = -10 if counts % 2 == 1 else 10
+        p = Process(target=create_process, args=(flags, args, dev, name, model_conf, prior))
+        p.start()
+        process_queue.append(p)
+        counts += 1
+    
+    for pro in process_queue:
+        pro.join()
+
+def create_process(flags, args, dev, name, model_conf, priority):
+    if not flags.model_name or name == flags.model_name:
             MaceLogger.info("Run model %s" % name)
             model_conf = config_parser.normalize_model_config(model_conf)
-            run_model_for_device(flags, args, dev, name, model_conf)
+            run_model_for_device(flags, args, dev, name, model_conf, priority)
 
-def run_model_for_device(flags, args, dev, model_name, model_conf):
+def run_model_for_device(flags, args, dev, model_name, model_conf, priority = 10):
     target_abi = flags.target_abi
     install_dir = run_target.default_install_dir(target_abi) + "/" + model_name
     sysdir = install_dir + "/interior"
     dev.mkdir(sysdir)
-
+    
     runtime_list = []
     for graph_name, graph_conf in model_conf[ModelKeys.subgraphs].items():
         runtime = graph_conf[ModelKeys.runtime]
@@ -222,7 +234,7 @@ def run_model_for_device(flags, args, dev, model_name, model_conf):
 
     target = Target(build_dir + "/install/bin/mace_run", libs,
                     opts=opts, envs=envs)
-    run_target.run_target(target_abi, install_dir, target, dev)
+    run_target.run_target(target_abi, install_dir, target, dev, priority)
 
     if DeviceType.GPU in runtime_list:
         opencl_dir = workdir + "/opencl"
@@ -275,6 +287,8 @@ def run_model_for_device(flags, args, dev, model_name, model_conf):
                           "")
     if should_generate_data:
         shutil.rmtree(tmpdirname)
+        
+    print("*** %s inference has finished ***" % model_name)
 
 
 def generate_input_data(input_file, input_node, input_shape, input_ranges,

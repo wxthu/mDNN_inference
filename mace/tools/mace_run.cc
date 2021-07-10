@@ -821,18 +821,9 @@ int Main(int argc, char **argv) {
   return -1;
 }
 
-// void Multi_thread(int argc, char **argv) {
-//   std::thread model_1(Main, argc, argv);
-//   std::thread model_2(Main, argc, argv);
-
-//   model_1.join();
-//   model_2.join();
-// }
-
 }  // namespace tools
 }  // namespace mace
 
 int main(int argc, char **argv) {
   mace::tools::Main(argc, argv);
-  // mace::tools::Multi_thread(argc, argv);
 }
