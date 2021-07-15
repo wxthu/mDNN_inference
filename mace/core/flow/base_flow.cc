@@ -78,7 +78,7 @@ MaceStatus BaseFlow::Run(const std::map<std::string, MaceTensor> &inputs,
   MACE_CHECK_NOTNULL(outputs);
   TensorMap input_tensors;
   TensorMap output_tensors;
-
+  LOG(INFO) << "BaseFlow begin to run ...";
   // Create and Transpose input tensors
   for (auto &input : inputs) {
     if (input_info_map_.find(input.first) == input_info_map_.end()) {
@@ -90,7 +90,7 @@ MaceStatus BaseFlow::Run(const std::map<std::string, MaceTensor> &inputs,
     MACE_RETURN_IF_ERROR(TransposeInput(input, input_tensor));
     input_tensors[input.first] = input_tensor;
   }
-
+  
   // Create output tensors
   for (auto &output : *outputs) {
     if (output_info_map_.find(output.first) == output_info_map_.end()) {
@@ -101,10 +101,10 @@ MaceStatus BaseFlow::Run(const std::map<std::string, MaceTensor> &inputs,
     Tensor *output_tensor = ws_->GetTensor(output.first);
     output_tensors[output.first] = output_tensor;
   }
-
+  
   // Run Model
   MACE_RETURN_IF_ERROR(Run(&input_tensors, &output_tensors, run_metadata));
-
+  LOG(INFO) << "Begin to transpose Outputs ...";
   // Transpose output tensors
   for (auto &output : *outputs) {
     Tensor *output_tensor = ws_->GetTensor(output.first);

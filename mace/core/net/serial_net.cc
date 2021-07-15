@@ -96,6 +96,8 @@ MaceStatus SerialNet::Run(RunMetadata *run_metadata,
   bool enable_opencl_profiling =
       profiling != nullptr && strlen(profiling) == 1 && profiling[0] == '1';
 
+  LOG(INFO) << "Begin net inference ...";
+
   MACE_MEMORY_LOGGING_GUARD();
   MACE_LATENCY_LOGGER(1, "Running net");
   OpContext context(ws_, cpu_runtime_);
