@@ -185,6 +185,7 @@ std::vector<RuntimeType> BaseEngine::GetRuntimeTypes() {
 MaceStatus BaseEngine::Forward(const std::map<std::string, MaceTensor> &inputs,
                                std::map<std::string, MaceTensor> *outputs,
                                RunMetadata *run_metadata) {
+  LOG(INFO) << " Begin forward process ...";
   MACE_RETURN_IF_ERROR(BeforeRun());
   MACE_RETURN_IF_ERROR(Run(inputs, outputs, run_metadata));
   return AfterRun();
