@@ -47,7 +47,7 @@ SerialNet::SerialNet(const OpRegistry *op_registry,
       target_runtime_(target_runtime),
       cpu_runtime_(cpu_runtime) {
   MACE_LATENCY_LOGGER(1, "Constructing SerialNet");
-
+  
   OpConstructContext construct_context(ws_);
   for (int idx = 0; idx < net_def->op_size(); ++idx) {
     std::shared_ptr<OperatorDef> op_def(new OperatorDef(net_def->op(idx)));
@@ -84,7 +84,7 @@ MaceStatus SerialNet::Init() {
     // Initialize the operation
     MACE_RETURN_IF_ERROR(op->Init(&init_context));
   }
-
+  
   MACE_RETURN_IF_ERROR(AllocateTensorMemory<SERIAL_OPT>(operators_));
 
   return MaceStatus::MACE_SUCCESS;
@@ -95,8 +95,8 @@ MaceStatus SerialNet::Run(RunMetadata *run_metadata,
   const char *profiling = getenv("MACE_OPENCL_PROFILING");
   bool enable_opencl_profiling =
       profiling != nullptr && strlen(profiling) == 1 && profiling[0] == '1';
-
-  LOG(INFO) << "Begin net inference ...";
+  
+  LOG(INFO) << "Begin Net inference ...";
 
   MACE_MEMORY_LOGGING_GUARD();
   MACE_LATENCY_LOGGER(1, "Running net");
@@ -225,7 +225,7 @@ MaceStatus SerialNet::Run(RunMetadata *run_metadata,
       }
     }
   }
-
+  
   return MaceStatus::MACE_SUCCESS;
 }
 

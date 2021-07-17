@@ -74,6 +74,7 @@ MaceStatus CpuRefFlow::Run(TensorMap *input_tensors,
   VLOG(1) << "CpuRefFlow::Run";
   MACE_UNUSED(input_tensors);
   MACE_UNUSED(output_tensors);
+  LOG(INFO) << "Cpu reference flow (derived by opencl) ...";
   return net_->Run(run_metadata, false);
 }
 
