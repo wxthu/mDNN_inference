@@ -95,10 +95,10 @@ MaceStatus SerialEngine::Run(
   }
 
   auto flow_num = flows_.size();
-  LOG(INFO) << "Flow run and nums of flow is : " << flow_num;
   for (size_t i = 0; i < flow_num; ++i) {
     auto *flow = flows_[i].get();
     VLOG(1) << "start run flow: " << flow->GetName();
+    LOG(INFO) << "Flow run and flow name is : "<< flow->GetName();
     auto ret = flow->Run(*(input_tensors_[flow]), output_tensors_[flow].get(),
                          run_metadata);
     MACE_RETURN_IF_ERROR(ret);
