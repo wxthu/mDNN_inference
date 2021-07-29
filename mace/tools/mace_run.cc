@@ -52,6 +52,30 @@
 namespace mace {
 namespace tools {
 
+class InputParams {
+ public:
+  InputParams(std::string model_name_, std::vector<std::string> input_names_, std::vector<std::vector<int64_t>> input_shapes_, 
+              std::vector<IDataType> input_data_types_, std::vector<DataFormat> input_data_formats_, std::vector<std::string> output_names_,
+              std::vector<std::vector<int64_t>> output_shapes_, std::vector<IDataType> output_data_types_, 
+              std::vector<DataFormat> output_data_formats_, float cpu_cap_)
+              : model_name(model_name_), input_names(input_names_), input_shapes(input_shapes_), 
+                input_data_types(input_data_types_), input_data_formats(input_data_formats_), output_names(output_names_),
+                output_shapes(output_shapes_), output_data_types(output_data_types_), output_data_formats(output_data_formats_),
+                cpu_capability(cpu_cap_) {}
+  ~InputParams() = default;
+
+  std::string model_name;
+  std::vector<std::string> input_names;
+  std::vector<std::vector<int64_t>> input_shapes;
+  std::vector<IDataType> input_data_types;
+  std::vector<DataFormat> input_data_formats;
+  std::vector<std::string> output_names;
+  std::vector<std::vector<int64_t>> output_shapes;
+  std::vector<IDataType> output_data_types;
+  std::vector<DataFormat> output_data_formats;
+  float cpu_capability;
+};
+
 void ParseShape(const std::string &str, std::vector<int64_t> *shape) {
   std::string tmp = str;
   while (!tmp.empty()) {
@@ -697,7 +721,7 @@ bool RunModel(const std::string &model_name,
   return true;
 }
 
-int Main(int argc, char **argv) {
+int Main(int argc, char **argv, std::vector<InputParams>& configs) {
   std::string usage = "MACE run model tool, please specify proper arguments.\n"
                       "usage: " + std::string(argv[0])
       + " --help";
@@ -807,24 +831,63 @@ int Main(int argc, char **argv) {
   //       GetCapability(static_cast<DeviceType>(RuntimeType::RT_CPU));
   //   cpu_float32_performance = cpu_capability.float32_performance.exec_time;
   // }
-  bool ret = false;
-  for (int i = 0; i < FLAGS_restart_round; ++i) {
-    VLOG(0) << "restart round " << i;
-    ret = RunModel(FLAGS_model_name, input_names, input_shape_vec,
-                   input_data_types, input_data_formats, output_names,
-                   output_shape_vec, output_data_types, output_data_formats,
-                   cpu_float32_performance);
-  }
-  if (ret) {
-    return 0;
-  }
-  return -1;
+
+  // bool ret = false;
+  // for (int i = 0; i < FLAGS_restart_round; ++i) {
+  //   VLOG(0) << "restart round " << i;
+  //   ret = RunModel(FLAGS_model_name, input_names, input_shape_vec,
+  //                  input_data_types, input_data_formats, output_names,
+  //                  output_shape_vec, output_data_types, output_data_formats,
+  //                  cpu_float32_performance);
+  // }
+  // if (ret) {
+  //   return 0;
+  // }
+  // return -1;
+  InputParams tmp(FLAGS_model_name, input_names, input_shape_vec,
+                  input_data_types, input_data_formats, output_names,
+                  output_shape_vec, output_data_types, output_data_formats,
+                  cpu_float32_performance);
+  configs.emplace_back(tmp);
+  return 0;
 }
 
+int MultipleModels(int argc, char **argv)
+{
+  std::string usage = "MACE run model tool, please specify proper arguments.\n"
+                      "usage: " + std::string(argv[0])
+      + " --help";
+  gflags::SetUsageMessage(usage);
+  gflags::ParseCommandLineFlags(&argc, &argv, true);
+
+  int model_nums = 0;
+  // parameters group
+  std::vector<InputParams> pg;
+  
+  while (true) {
+    Main(argc, argv, pg);
+    ++model_nums;
+    LOG(INFO) << "*** Current model is : " << FLAGS_model_name;
+    if (FLAGS_model_name == "") break;
+  }
+  LOG(INFO) << "Read " << model_nums << " models success !";
+
+  // run models;
+  for (size_t i = 0; i < pg.size(); ++i)
+  {
+    RunModel(pg[i].model_name, pg[i].input_names, pg[i].input_shapes,
+             pg[i].input_data_types, pg[i].input_data_formats,
+             pg[i].output_names, pg[i].output_shapes, pg[i].output_data_types,
+             pg[i].output_data_formats, pg[i].cpu_capability);
+  }
+
+  return 0;
+}
 
 }  // namespace tools
 }  // namespace mace
 
 int main(int argc, char **argv) {
-  mace::tools::Main(argc, argv);
+  // mace::tools::Main(argc, argv);
+  mace::tools::MultipleModels(argc, argv);
 }
