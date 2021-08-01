@@ -52,6 +52,50 @@
 namespace mace {
 namespace tools {
 
+class ParamGroups {
+ public:
+  ParamGroups() = default;
+  ParamGroups(const ParamGroups &g)
+      : model_name(g.model_name),
+        input_node(g.input_node),
+        input_shape(g.input_shape),
+        output_node(g.output_node),
+        output_shape(g.output_shape),
+        input_data_format(g.input_data_format),
+        output_data_format(g.output_data_format),
+        input_file(g.input_file),
+        output_file(g.output_file),
+        input_dir(g.input_dir),
+        opencl_cache_full_path(g.opencl_cache_full_path),
+        opencl_binary_file(g.opencl_binary_file),
+        opencl_parameter_file(g.opencl_parameter_file),
+        model_data_file(g.model_data_file),
+        model_file(g.model_file),
+        accelerator_binary_file(g.accelerator_binary_file),
+        accelerator_storage_file(g.accelerator_storage_file),
+        mace_env_var(g.mace_env_var) {}
+  ~ParamGroups() = default;
+
+  std::string model_name;
+  std::string input_node;
+  std::string input_shape;
+  std::string output_node;
+  std::string output_shape;
+  std::string input_data_format;
+  std::string output_data_format;
+  std::string input_file;
+  std::string output_file;
+  std::string input_dir;
+  std::string opencl_cache_full_path;
+  std::string opencl_binary_file;
+  std::string opencl_parameter_file;
+  std::string model_data_file;
+  std::string model_file;
+  std::string accelerator_binary_file;
+  std::string accelerator_storage_file;
+  std::string mace_env_var;
+};
+
 class InputParams {
  public:
   InputParams(std::string model_name_, std::vector<std::string> input_names_, std::vector<std::vector<int64_t>> input_shapes_, 
@@ -73,6 +117,8 @@ class InputParams {
   std::vector<std::vector<int64_t>> output_shapes;
   std::vector<IDataType> output_data_types;
   std::vector<DataFormat> output_data_formats;
+  ParamGroups* cmd_line;
+  // std::unique_ptr<ParamGroups> cmd_line;
   float cpu_capability;
 };
 
@@ -349,7 +395,7 @@ bool RunModel(const std::string &model_name,
               const std::vector<std::vector<int64_t>> &output_shapes,
               const std::vector<IDataType> &output_data_types,
               const std::vector<DataFormat> &output_data_formats,
-              float cpu_capability) {
+              const InputParams& params, float cpu_capability) {
   int64_t t0 = NowMicros();
   bool *model_data_unused = nullptr;
   MaceEngine *tutor = nullptr;
@@ -366,19 +412,23 @@ bool RunModel(const std::string &model_name,
   }
 #if defined(MACE_ENABLE_OPENCL) || defined(MACE_ENABLE_HTA)
   std::shared_ptr<OpenclContext> opencl_context;
-  const char *storage_path_ptr = getenv("MACE_INTERNAL_STORAGE_PATH");
-  const std::string storage_path =
-      std::string(storage_path_ptr == nullptr ?
-                  "/data/local/tmp/mace_run/interior" : storage_path_ptr);
-  std::vector<std::string> opencl_binary_paths = {FLAGS_opencl_binary_file};
+  // const char *storage_path_ptr = getenv("MACE_INTERNAL_STORAGE_PATH");
+  // const std::string storage_path =
+  //     std::string(storage_path_ptr == nullptr ?
+  //                 "/data/local/tmp/mace_run/interior" : storage_path_ptr);
+  const std::string storage_path = params.cmd_line->mace_env_var.empty()
+                                       ? "/data/local/tmp/mace_run/interior"
+                                       : params.cmd_line->mace_env_var;
+  std::vector<std::string> opencl_binary_paths = {
+      params.cmd_line->opencl_binary_file};
 
   opencl_context = GPUContextBuilder()
       .SetStoragePath(storage_path)
-      .SetOpenCLCacheFullPath(FLAGS_opencl_cache_full_path)
+      .SetOpenCLCacheFullPath(params.cmd_line->opencl_cache_full_path)
       .SetOpenCLCacheReusePolicy(
           static_cast<OpenCLCacheReusePolicy>(FLAGS_opencl_cache_reuse_policy))
       .SetOpenCLBinaryPaths(opencl_binary_paths)
-      .SetOpenCLParameterPath(FLAGS_opencl_parameter_file)
+      .SetOpenCLParameterPath(params.cmd_line->opencl_parameter_file)
       .Finalize();
 
   config.SetGPUContext(opencl_context);
@@ -399,19 +449,19 @@ bool RunModel(const std::string &model_name,
 #if defined(MACE_ENABLE_MTK_APU) || defined(MACE_ENABLE_QNN)
   config.SetAcceleratorCache(
       static_cast<AcceleratorCachePolicy>(FLAGS_accelerator_cache_policy),
-      FLAGS_accelerator_binary_file, FLAGS_accelerator_storage_file);
+      params.cmd_line->accelerator_binary_file, params.cmd_line->accelerator_storage_file);
 #endif
 #ifdef MACE_ENABLE_QNN
   config.SetQnnPerformance(HEXAGON_SYSTEM_SETTINGS);
 #endif
   std::unique_ptr<mace::port::ReadOnlyMemoryRegion> model_graph_data =
       make_unique<mace::port::ReadOnlyBufferMemoryRegion>();
-  if (FLAGS_model_file != "") {
+  if (params.cmd_line->model_file != "") {
     auto fs = GetFileSystem();
-    status = fs->NewReadOnlyMemoryRegionFromFile(FLAGS_model_file.c_str(),
+    status = fs->NewReadOnlyMemoryRegionFromFile(params.cmd_line->model_file.c_str(),
                                                  &model_graph_data);
     if (status != MaceStatus::MACE_SUCCESS) {
-      LOG(FATAL) << "Failed to read file: " << FLAGS_model_file;
+      LOG(FATAL) << "Failed to read file: " << params.cmd_line->model_file;
     }
   }
 
@@ -419,12 +469,12 @@ bool RunModel(const std::string &model_name,
   // is CPU except half/uint8 weights are used to compress model data size.
   std::unique_ptr<mace::port::ReadOnlyMemoryRegion> model_weights_data =
       make_unique<mace::port::ReadOnlyBufferMemoryRegion>();
-  if (FLAGS_model_data_file != "") {
+  if (params.cmd_line->model_data_file != "") {
     auto fs = GetFileSystem();
-    status = fs->NewReadOnlyMemoryRegionFromFile(FLAGS_model_data_file.c_str(),
+    status = fs->NewReadOnlyMemoryRegionFromFile(params.cmd_line->model_data_file.c_str(),
                                                  &model_weights_data);
     if (status != MaceStatus::MACE_SUCCESS) {
-      LOG(FATAL) << "Failed to read file: " << FLAGS_model_data_file;
+      LOG(FATAL) << "Failed to read file: " << params.cmd_line->model_data_file;
     }
   }
 
@@ -503,7 +553,7 @@ bool RunModel(const std::string &model_name,
     auto input_tensor_size = std::accumulate(
         input_shapes[i].begin(), input_shapes[i].end(), 1,
         std::multiplies<int64_t>());
-    auto file_path = FLAGS_input_file + "_" + FormatName(input_names[i]);
+    auto file_path = params.cmd_line->input_file + "_" + FormatName(input_names[i]);
     auto input_data = ReadInputDataFromFile(
         file_path, input_tensor_size, input_data_types[i]);
 
@@ -524,11 +574,11 @@ bool RunModel(const std::string &model_name,
         static_cast<IDataType>(output_data_types[i]));
   }
 
-  if (!FLAGS_input_dir.empty()) {
+  if (!params.cmd_line->input_dir.empty()) {
     DIR *dir_parent;
     struct dirent *entry;
-    dir_parent = opendir(FLAGS_input_dir.c_str());
-    MACE_CHECK(dir_parent != nullptr, "Open input_dir ", FLAGS_input_dir,
+    dir_parent = opendir(params.cmd_line->input_dir.c_str());
+    MACE_CHECK(dir_parent != nullptr, "Open input_dir ", params.cmd_line->input_dir,
                " failed: ", strerror(errno));
     int input_file_count = 0;
     std::string prefix = FormatName(input_names[0]);
@@ -540,7 +590,7 @@ bool RunModel(const std::string &model_name,
 
         for (size_t i = 0; i < input_count; ++i) {
           file_name =
-              FLAGS_input_dir + "/" + FormatName(input_names[i]) + suffix;
+              params.cmd_line->input_dir + "/" + FormatName(input_names[i]) + suffix;
           ReadInputDataFromFile(
               file_name, inputs_size[input_names[i]],
               input_data_types[i], inputs[input_names[i]].data<char>());
@@ -568,7 +618,7 @@ bool RunModel(const std::string &model_name,
     closedir(dir_parent);
     MACE_CHECK(
         input_file_count != 0, "Found no input file name starts with \'",
-        prefix, "\' in: ", FLAGS_input_dir,
+        prefix, "\' in: ", params.cmd_line->input_dir,
         ", input file name should start with input tensor name.");
   } else {
     LOG(INFO) << "Warm up run";
@@ -695,7 +745,7 @@ bool RunModel(const std::string &model_name,
 
     for (size_t i = 0; i < output_count; ++i) {
       std::string output_name =
-          FLAGS_output_file + "_" + FormatName(output_names[i]);
+          params.cmd_line->output_file + "_" + FormatName(output_names[i]);
       auto output_data_type = outputs[output_names[i]].data_type();
       auto file_data_type =
           output_data_type == IDT_INT32 ? IDT_INT32 : IDT_FLOAT;
@@ -721,15 +771,9 @@ bool RunModel(const std::string &model_name,
   return true;
 }
 
-int Main(int argc, char **argv, std::vector<InputParams>& configs) {
-  std::string usage = "MACE run model tool, please specify proper arguments.\n"
-                      "usage: " + std::string(argv[0])
-      + " --help";
-  gflags::SetUsageMessage(usage);
-  gflags::ParseCommandLineFlags(&argc, &argv, true);
-
-  std::vector<std::string> input_names = Split(FLAGS_input_node, ',');
-  std::vector<std::string> output_names = Split(FLAGS_output_node, ',');
+int Main(int argc, char **argv, ParamGroups& command, std::vector<InputParams>& configs) {
+  std::vector<std::string> input_names = Split(command.input_node, ',');
+  std::vector<std::string> output_names = Split(command.output_node, ',');
   if (input_names.empty() || output_names.empty()) {
     LOG(INFO) << gflags::ProgramUsage();
     return 0;
@@ -741,45 +785,24 @@ int Main(int argc, char **argv, std::vector<InputParams>& configs) {
     setenv("MACE_QNN_PROFILE_LEVEL", "2", 2);
   }
 
-  LOG(INFO) << "model name: " << FLAGS_model_name;
+  LOG(INFO) << "model name: " << command.model_name;
   LOG(INFO) << "mace version: " << MaceVersion();
-  LOG(INFO) << "input node: " << FLAGS_input_node;
-  LOG(INFO) << "input shape: " << FLAGS_input_shape;
-  LOG(INFO) << "input data_type: " << FLAGS_input_data_type;
-  LOG(INFO) << "input data_format: " << FLAGS_input_data_format;
-  LOG(INFO) << "output node: " << FLAGS_output_node;
-  LOG(INFO) << "output shape: " << FLAGS_output_shape;
-  LOG(INFO) << "output data_format: " << FLAGS_output_data_format;
-  LOG(INFO) << "input_file: " << FLAGS_input_file;
-  LOG(INFO) << "output_file: " << FLAGS_output_file;
-  LOG(INFO) << "input dir: " << FLAGS_input_dir;
-  LOG(INFO) << "output dir: " << FLAGS_output_dir;
-  LOG(INFO) << "model_data_file: " << FLAGS_model_data_file;
-  LOG(INFO) << "model_file: " << FLAGS_model_file;
-  LOG(INFO) << "accelerator_cache_policy: " << FLAGS_accelerator_cache_policy;
-  LOG(INFO) << "accelerator_binary_file: " << FLAGS_accelerator_binary_file;
-  LOG(INFO) << "accelerator_storage_file: " << FLAGS_accelerator_storage_file;
-  LOG(INFO) << "apu_boost_hint: " << FLAGS_apu_boost_hint;
-  LOG(INFO) << "apu_preference_hint: " << FLAGS_apu_preference_hint;
-  LOG(INFO) << "round: " << FLAGS_round;
-  LOG(INFO) << "restart_round: " << FLAGS_restart_round;
-  LOG(INFO) << "gpu_perf_hint: " << FLAGS_gpu_perf_hint;
-  LOG(INFO) << "gpu_priority_hint: " << FLAGS_gpu_priority_hint;
-  LOG(INFO) << "num_threads: " << FLAGS_num_threads;
-  LOG(INFO) << "cpu_affinity_policy: " << FLAGS_cpu_affinity_policy;
-  auto limit_opencl_kernel_time = getenv("MACE_LIMIT_OPENCL_KERNEL_TIME");
-  if (limit_opencl_kernel_time) {
-    LOG(INFO) << "limit_opencl_kernel_time: "
-              << limit_opencl_kernel_time;
-  }
-  auto opencl_queue_window_size = getenv("MACE_OPENCL_QUEUE_WINDOW_SIZE");
-  if (opencl_queue_window_size) {
-    LOG(INFO) << "opencl_queue_window_size: "
-              << getenv("MACE_OPENCL_QUEUE_WINDOW_SIZE");
-  }
+  LOG(INFO) << "input node: " << command.input_node;
+  LOG(INFO) << "input shape: " << command.input_shape;
+  LOG(INFO) << "input data_format: " << command.input_data_format;
+  LOG(INFO) << "output node: " << command.output_node;
+  LOG(INFO) << "output shape: " << command.output_shape;
+  LOG(INFO) << "output data_format: " << command.output_data_format;
+  LOG(INFO) << "input_file: " << command.input_file;
+  LOG(INFO) << "output_file: " << command.output_file;
+  LOG(INFO) << "input dir: " << command.input_dir;
+  LOG(INFO) << "model_data_file: " << command.model_data_file;
+  LOG(INFO) << "model_file: " << command.model_file;
+  LOG(INFO) << "accelerator_binary_file: " << command.accelerator_binary_file;
+  LOG(INFO) << "accelerator_storage_file: " << command.accelerator_storage_file;
 
-  std::vector<std::string> input_shapes = Split(FLAGS_input_shape, ':');
-  std::vector<std::string> output_shapes = Split(FLAGS_output_shape, ':');
+  std::vector<std::string> input_shapes = Split(command.input_shape, ':');
+  std::vector<std::string> output_shapes = Split(command.output_shape, ':');
 
   const size_t input_count = input_shapes.size();
   const size_t output_count = output_shapes.size();
@@ -813,9 +836,9 @@ int Main(int argc, char **argv, std::vector<InputParams>& configs) {
   }
 
   std::vector<std::string> raw_input_data_formats =
-      Split(FLAGS_input_data_format, ',');
+      Split(command.input_data_format, ',');
   std::vector<std::string> raw_output_data_formats =
-      Split(FLAGS_output_data_format, ',');
+      Split(command.output_data_format, ',');
   std::vector<DataFormat> input_data_formats(input_count);
   std::vector<DataFormat> output_data_formats(output_count);
   for (size_t i = 0; i < input_count; ++i) {
@@ -844,10 +867,12 @@ int Main(int argc, char **argv, std::vector<InputParams>& configs) {
   //   return 0;
   // }
   // return -1;
-  InputParams tmp(FLAGS_model_name, input_names, input_shape_vec,
+  InputParams tmp(command.model_name, input_names, input_shape_vec,
                   input_data_types, input_data_formats, output_names,
                   output_shape_vec, output_data_types, output_data_formats,
                   cpu_float32_performance);
+  tmp.cmd_line = &command;
+  // tmp.cmd_line = make_unique<ParamGroups>(command);
   configs.emplace_back(tmp);
   return 0;
 }
@@ -860,25 +885,107 @@ int MultipleModels(int argc, char **argv)
   gflags::SetUsageMessage(usage);
   gflags::ParseCommandLineFlags(&argc, &argv, true);
 
-  int model_nums = 0;
   // parameters group
+  std::vector<ParamGroups> commands;
   std::vector<InputParams> pg;
   
-  while (true) {
-    Main(argc, argv, pg);
-    ++model_nums;
-    LOG(INFO) << "*** Current model is : " << FLAGS_model_name;
-    if (FLAGS_model_name == "") break;
+  std::vector<std::string> model_name = Split(FLAGS_model_name, '&');
+  std::vector<std::string> input_node = Split(FLAGS_input_node, '&');
+  std::vector<std::string> output_node = Split(FLAGS_output_node, '&');
+  std::vector<std::string> input_shape = Split(FLAGS_input_shape, '&');
+  std::vector<std::string> output_shape = Split(FLAGS_output_shape, '&');
+  std::vector<std::string> input_data_format =
+      Split(FLAGS_input_data_format, '&');
+  std::vector<std::string> output_data_format =
+      Split(FLAGS_output_data_format, '&');
+  std::vector<std::string> input_file = Split(FLAGS_input_file, '&');
+  std::vector<std::string> output_file = Split(FLAGS_output_file, '&');
+  std::vector<std::string> input_dir = Split(FLAGS_input_dir, '&');
+  std::vector<std::string> opencl_cache_full_path =
+      Split(FLAGS_opencl_cache_full_path, '&');
+  std::vector<std::string> opencl_binary_file =
+      Split(FLAGS_opencl_binary_file, '&');
+  std::vector<std::string> opencl_parameter_file =
+      Split(FLAGS_opencl_parameter_file, '&');
+  std::vector<std::string> model_data_file = Split(FLAGS_model_data_file, '&');
+  std::vector<std::string> model_file = Split(FLAGS_model_file, '&');
+  std::vector<std::string> accelerator_binary_file =
+      Split(FLAGS_accelerator_binary_file, '&');
+  std::vector<std::string> accelerator_storage_file =
+      Split(FLAGS_accelerator_storage_file, '&');
+  std::vector<std::string> mace_env_var =
+      Split(std::string(getenv("MACE_INTERNAL_STORAGE_PATH")), '&');
+
+  for (size_t i = 0; i < model_name.size(); ++i)
+  {
+    ParamGroups bucket;
+    bucket.model_name = model_name.empty() ? "" : model_name[i];
+    bucket.input_node = input_node.empty() ? "" : input_node[i];
+    bucket.input_shape = input_shape.empty() ? "" : input_shape[i];
+    bucket.output_node = output_node.empty() ? "" : output_node[i];
+    bucket.output_shape = output_shape.empty() ? "" : output_shape[i];
+    bucket.input_data_format =
+        input_data_format.empty() ? "" : input_data_format[i];
+    bucket.output_data_format =
+        output_data_format.empty() ? "" : output_data_format[i];
+    bucket.input_file = input_file.empty() ? "" : input_file[i];
+    bucket.output_file = output_file.empty() ? "" : output_file[i];
+    LOG(INFO) << "output file : " << output_file.size();
+    bucket.input_dir = input_dir.empty() ? "" : input_dir[i];
+    
+    bucket.model_data_file = model_data_file.empty() ? "" : model_data_file[i];
+    LOG(INFO) << "model data file : " << model_data_file.size();
+    bucket.model_file = model_file.empty() ? "" : model_file[i];
+    bucket.opencl_cache_full_path =
+        opencl_cache_full_path.empty() ? "" : opencl_cache_full_path[i];
+    bucket.opencl_binary_file =
+        opencl_binary_file.empty() ? "" : opencl_binary_file[i];
+    bucket.opencl_parameter_file =
+        opencl_parameter_file.empty() ? "" : opencl_parameter_file[i];
+    bucket.accelerator_binary_file =
+        accelerator_binary_file.empty() ? "" : accelerator_binary_file[i];
+    bucket.accelerator_storage_file =
+        accelerator_storage_file.empty() ? "" : accelerator_storage_file[i];
+    bucket.mace_env_var = mace_env_var.empty() ? "" : mace_env_var[i];
+
+    commands.emplace_back(std::move(bucket));
+    LOG(INFO) << "parsing model : " << i << " finished !";
   }
-  LOG(INFO) << "Read " << model_nums << " models success !";
+
+
+  for (size_t j = 0; j < model_name.size(); ++j)
+  {
+    Main(argc, argv, commands[j], pg);
+  }
 
   // run models;
-  for (size_t i = 0; i < pg.size(); ++i)
+  LOG(INFO) << "accelerator_cache_policy: " << FLAGS_accelerator_cache_policy;
+  LOG(INFO) << "apu_boost_hint: " << FLAGS_apu_boost_hint;
+  LOG(INFO) << "apu_preference_hint: " << FLAGS_apu_preference_hint;
+  LOG(INFO) << "round: " << FLAGS_round;
+  LOG(INFO) << "restart_round: " << FLAGS_restart_round;
+  LOG(INFO) << "gpu_perf_hint: " << FLAGS_gpu_perf_hint;
+  LOG(INFO) << "gpu_priority_hint: " << FLAGS_gpu_priority_hint;
+  LOG(INFO) << "num_threads: " << FLAGS_num_threads;
+  LOG(INFO) << "cpu_affinity_policy: " << FLAGS_cpu_affinity_policy;
+  LOG(INFO) << "output dir: " << FLAGS_output_dir;
+  auto limit_opencl_kernel_time = getenv("MACE_LIMIT_OPENCL_KERNEL_TIME");
+  if (limit_opencl_kernel_time) {
+    LOG(INFO) << "limit_opencl_kernel_time: "
+              << limit_opencl_kernel_time;
+  }
+  auto opencl_queue_window_size = getenv("MACE_OPENCL_QUEUE_WINDOW_SIZE");
+  if (opencl_queue_window_size) {
+    LOG(INFO) << "opencl_queue_window_size: "
+              << getenv("MACE_OPENCL_QUEUE_WINDOW_SIZE");
+  }
+  for (int i = 0; i < model_name.size(); ++i)
   {
+    LOG(INFO) << " ** to run model : " << model_name[i];
     RunModel(pg[i].model_name, pg[i].input_names, pg[i].input_shapes,
              pg[i].input_data_types, pg[i].input_data_formats,
              pg[i].output_names, pg[i].output_shapes, pg[i].output_data_types,
-             pg[i].output_data_formats, pg[i].cpu_capability);
+             pg[i].output_data_formats, pg[i], pg[i].cpu_capability);
   }
 
   return 0;
