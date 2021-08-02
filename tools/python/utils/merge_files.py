@@ -18,8 +18,8 @@ def merge_files(file1, file2, output=None):
         if value != param2 and value.isdigit() is False and re.match(r'LD_LIBRARY_PATH*', param1) is None:  
             param1 = param1 + '&' + value    
             
-            param1.replace("'","")
-            param1.replace('"',"")
+            param1 = param1.replace("'","")
+            param1 = param1.replace('"',"")
             param1 = param1.split('=')
             param1 = param1[0] + "='" + param1[1] + "'"  
         cmd.append(param1)
