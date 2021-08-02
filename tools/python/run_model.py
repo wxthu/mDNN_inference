@@ -36,7 +36,8 @@ from utils.util import mace_check
 import run_target
 import validate
 
-from multiprocessing import Process
+from utils.merge_files import merge_files
+import shutil
 
 """
 Tool for mace_run:
@@ -84,14 +85,37 @@ def run_models(flags, args):
         run_models_for_device(flags, args, dev)
 
 def run_models_for_device(flags, args, dev):
+    index = 0
     conf = config_parser.parse(flags.config)
     for name, model_conf in conf["models"].items():
         if not flags.model_name or name == flags.model_name:
             MaceLogger.info("Run model %s" % name)
             model_conf = config_parser.normalize_model_config(model_conf)
-            run_model_for_device(flags, args, dev, name, model_conf)
+            run_model_for_device(flags, args, dev, name, model_conf, index)
+        index += 1
+        
+    # merge .sh files
+    for i in range (2, index + 1):
+        file1 = "cmd" + str(i-1) + ".sh"
+        file2 = "cmd" + str(i) + ".sh"
+        merge_files(file1, file2, file2)
+        
+    shutil.copy(file2, "cmd.sh")
+    cmd_file_path = "cmd.sh"
+    target_dir = "/data/local/tmp/mace_run"
+    dev.run_more(cmd_file_path, target_dir )
+    
+    # remove local .sh files
+    os.remove("cmd.sh")
+    for i in range(1, index + 1):
+        f = "cmd" + str(i) + ".sh"
+        os.remove(f)
+    
+    print("To sum up, %s models finish run !!!" % index)
+        
+    
 
-def run_model_for_device(flags, args, dev, model_name, model_conf):
+def run_model_for_device(flags, args, dev, model_name, model_conf, index):
     target_abi = flags.target_abi
     install_dir = run_target.default_install_dir(target_abi) + "/" + model_name
     sysdir = install_dir + "/interior"
@@ -222,7 +246,8 @@ def run_model_for_device(flags, args, dev, model_name, model_conf):
 
     target = Target(build_dir + "/install/bin/mace_run", libs,
                     opts=opts, envs=envs)
-    run_target.run_target(target_abi, install_dir, target, dev)
+    # run_target.run_target(target_abi, install_dir, target, dev)
+    run_target.run_target_multiple_model_version(target_abi, install_dir, target, dev, index)
 
     if DeviceType.GPU in runtime_list:
         opencl_dir = workdir + "/opencl"

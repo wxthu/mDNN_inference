@@ -42,6 +42,16 @@ def run_target(target_abi, install_dir, target_obj, dev):
 
     dev.run(device_target)
 
+def run_target_multiple_model_version(target_abi, install_dir, target_obj, dev, index):
+    # reinstall target
+    print("Install target from %s to %s" % (target_obj.path, install_dir))
+    device_target = dev.install(target_obj, install_dir)
+    print(device_target)
+
+    cmd_file_name = "cmd" + str(index + 1) + ".sh";
+    with open(cmd_file_name, "w") as cmd_file:
+        cmd_file.write(str(device_target))
+
 
 def run_target_origin(target_abi, install_dir, target_obj, device_ids="all"):
     if not install_dir:
