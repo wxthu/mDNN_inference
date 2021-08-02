@@ -74,7 +74,10 @@ class Device(object):
 
     def run(self, target):
         pass
-
+    
+    def run_more(self, cmd_file_path, target_dir):
+        pass
+    
     def pull(self, target, out_dir):
         pass
 
@@ -204,6 +207,19 @@ class AndroidDevice(Device):
 
         out = execute("adb -s %s shell sh %s" % (self._device_id,
                                                  target_dir + "/cmd.sh"))
+        # May have false positive using the following error word
+        for line in out.split("\n")[:-10]:
+            if ("Aborted" in line
+                    or "FAILED" in line or "Segmentation fault" in line):
+                raise Exception(line)
+    
+    def run_more(self, cmd_file_path, target_dir):
+        execute("adb -s %s push %s %s" % (self._device_id, 
+                                          cmd_file_path, 
+                                          target_dir))
+        
+        out = execute("adb -s %s shell sh %s" % (self._device_id, 
+                                                target_dir + "/cmd.sh"))
         # May have false positive using the following error word
         for line in out.split("\n")[:-10]:
             if ("Aborted" in line
