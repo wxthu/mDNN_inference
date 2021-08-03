@@ -740,7 +740,7 @@ bool RunModel(const std::string &model_name,
         }
       }
       model_run_millis = total_run_duration / 1000.0 / FLAGS_round;
-      LOG(INFO) << "Average latency: " << model_run_millis << " ms";
+      LOG(INFO) << "Average latency for " << model_name << " : " << model_run_millis << " ms";
     }
 
     for (size_t i = 0; i < output_count; ++i) {
