@@ -93,17 +93,21 @@ def run_models_for_device(flags, args, dev):
             model_conf = config_parser.normalize_model_config(model_conf)
             run_model_for_device(flags, args, dev, name, model_conf, index)
         index += 1
-        
+    
     # merge .sh files
-    for i in range (2, index + 1):
-        file1 = "cmd" + str(i-1) + ".sh"
-        file2 = "cmd" + str(i) + ".sh"
-        merge_files(file1, file2, file2)
+    if index > 1:
+        for i in range (2, index + 1):
+            file1 = "cmd" + str(i-1) + ".sh"
+            file2 = "cmd" + str(i) + ".sh"
+            merge_files(file1, file2, file2)
+            
+        shutil.copy(file2, "cmd.sh")
+    else: 
+        shutil.copy("cmd1.sh", "cmd.sh")
         
-    shutil.copy(file2, "cmd.sh")
     cmd_file_path = "cmd.sh"
     target_dir = "/data/local/tmp/mace_run"
-    dev.run_more(cmd_file_path, target_dir )
+    dev.run_more(cmd_file_path, target_dir)
     
     # remove local .sh files
     os.remove("cmd.sh")
@@ -246,9 +250,12 @@ def run_model_for_device(flags, args, dev, model_name, model_conf, index):
 
     target = Target(build_dir + "/install/bin/mace_run", libs,
                     opts=opts, envs=envs)
+    
     # run_target.run_target(target_abi, install_dir, target, dev)
     run_target.run_target_multiple_model_version(target_abi, install_dir, target, dev, index)
-
+    # multiple model version does not support following code,
+    # because we need to set GPUcontext in mace_run.cc
+    # to fix this bug in future
     if DeviceType.GPU in runtime_list:
         opencl_dir = workdir + "/opencl"
         util.mkdir_p(opencl_dir)
@@ -264,7 +271,7 @@ def run_model_for_device(flags, args, dev, model_name, model_conf, index):
                          opencl_dir, model_name,
                          dev.info()["ro.product.model"].replace(' ', ''),
                          dev.info()["ro.board.platform"]))
-
+    
     if flags.validate:
         validate_model_file = util.download_or_get_model(
             model_conf[ModelKeys.model_file_path],
