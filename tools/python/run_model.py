@@ -253,24 +253,26 @@ def run_model_for_device(flags, args, dev, model_name, model_conf, index):
     
     # run_target.run_target(target_abi, install_dir, target, dev)
     run_target.run_target_multiple_model_version(target_abi, install_dir, target, dev, index)
-    # multiple model version does not support following code,
-    # because we need to set GPUcontext in mace_run.cc
-    # to fix this bug in future
-    if DeviceType.GPU in runtime_list:
-        opencl_dir = workdir + "/opencl"
-        util.mkdir_p(opencl_dir)
-        dev.pull(
-            Target(install_dir + "/interior/mace_cl_compiled_program.bin"),
-            "%s/%s_compiled_opencl_kernel.%s.%s.bin" % (
-                opencl_dir, model_name,
-                dev.info()["ro.product.model"].replace(' ', ''),
-                dev.info()["ro.board.platform"]))
-        if flags.tune:
-            dev.pull(Target(install_dir + "/interior/tune_params"),
-                     "%s/%s_tuned_opencl_parameter.%s.%s.bin" % (
-                         opencl_dir, model_name,
-                         dev.info()["ro.product.model"].replace(' ', ''),
-                         dev.info()["ro.board.platform"]))
+    
+    '''
+    Multiple model version does not support following code, because we need to set GPUcontext "in mace_run.cc"
+    To fix this bug in future
+    '''
+    # if DeviceType.GPU in runtime_list:
+    #     opencl_dir = workdir + "/opencl"
+    #     util.mkdir_p(opencl_dir)
+    #     dev.pull(
+    #         Target(install_dir + "/interior/mace_cl_compiled_program.bin"),
+    #         "%s/%s_compiled_opencl_kernel.%s.%s.bin" % (
+    #             opencl_dir, model_name,
+    #             dev.info()["ro.product.model"].replace(' ', ''),
+    #             dev.info()["ro.board.platform"]))
+    #     if flags.tune:
+    #         dev.pull(Target(install_dir + "/interior/tune_params"),
+    #                  "%s/%s_tuned_opencl_parameter.%s.%s.bin" % (
+    #                      opencl_dir, model_name,
+    #                      dev.info()["ro.product.model"].replace(' ', ''),
+    #                      dev.info()["ro.board.platform"]))
     
     if flags.validate:
         validate_model_file = util.download_or_get_model(

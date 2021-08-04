@@ -43,7 +43,7 @@
 #include "mace/utils/statistics.h"
 #include "mace/utils/transpose.h"
 
-// #include <thread>
+#include <thread>
 
 #ifdef MODEL_GRAPH_FORMAT_CODE
 #include "mace/codegen/engine/mace_engine_factory.h"
@@ -982,11 +982,17 @@ int MultipleModels(int argc, char **argv)
   }
   for (int i = 0; i < model_name.size(); ++i)
   {
-    LOG(INFO) << " ** to run model : " << model_name[i];
-    RunModel(pg[i].model_name, pg[i].input_names, pg[i].input_shapes,
-             pg[i].input_data_types, pg[i].input_data_formats,
-             pg[i].output_names, pg[i].output_shapes, pg[i].output_data_types,
-             pg[i].output_data_formats, pg[i], pg[i].cpu_capability);
+    std::thread t(RunModel, pg[i].model_name, pg[i].input_names,
+                  pg[i].input_shapes, pg[i].input_data_types,
+                  pg[i].input_data_formats, pg[i].output_names,
+                  pg[i].output_shapes, pg[i].output_data_types,
+                  pg[i].output_data_formats, pg[i], pg[i].cpu_capability);
+    // LOG(INFO) << " ** to run model : " << model_name[i];
+    // RunModel(pg[i].model_name, pg[i].input_names, pg[i].input_shapes,
+    //          pg[i].input_data_types, pg[i].input_data_formats,
+    //          pg[i].output_names, pg[i].output_shapes, pg[i].output_data_types,
+    //          pg[i].output_data_formats, pg[i], pg[i].cpu_capability);
+    t.join();
   }
 
   return 0;
