@@ -27,8 +27,12 @@ RuntimeType NetOptimizer::SelectBestRuntime(
       "Conv2D", "DepthwiseConv2d", "Deconv2D", "DepthwiseDeconv2d",
       "FullyConnected"
   };
+  static const std::set<std::string> kCpuFallbackOps = {"Pooling"};
   // CPU is the runtime to fall back
   RuntimeType best_runtime = RuntimeType::RT_CPU;
+  if (kCpuFallbackOps.count(op_def->type()) == 1) {
+    return best_runtime;
+  }
   if (available_runtimes.count(target_runtime_type) == 1) {
     best_runtime = target_runtime_type;
   }
