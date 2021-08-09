@@ -931,11 +931,9 @@ int MultipleModels(int argc, char **argv)
         output_data_format.empty() ? "" : output_data_format[i];
     bucket.input_file = input_file.empty() ? "" : input_file[i];
     bucket.output_file = output_file.empty() ? "" : output_file[i];
-    LOG(INFO) << "output file : " << output_file.size();
     bucket.input_dir = input_dir.empty() ? "" : input_dir[i];
     
     bucket.model_data_file = model_data_file.empty() ? "" : model_data_file[i];
-    LOG(INFO) << "model data file : " << model_data_file.size();
     bucket.model_file = model_file.empty() ? "" : model_file[i];
     bucket.opencl_cache_full_path =
         opencl_cache_full_path.empty() ? "" : opencl_cache_full_path[i];
@@ -950,7 +948,6 @@ int MultipleModels(int argc, char **argv)
     bucket.mace_env_var = mace_env_var.empty() ? "" : mace_env_var[i];
 
     commands.emplace_back(std::move(bucket));
-    LOG(INFO) << "parsing model : " << i << " finished !";
   }
 
 
@@ -988,20 +985,13 @@ int MultipleModels(int argc, char **argv)
                   pg[i].input_data_formats, pg[i].output_names,
                   pg[i].output_shapes, pg[i].output_data_types,
                   pg[i].output_data_formats, pg[i], pg[i].cpu_capability);
-                  /*
-    std::thread t(RunModel, pg[i].model_name, pg[i].input_names,
-                  pg[i].input_shapes, pg[i].input_data_types,
-                  pg[i].input_data_formats, pg[i].output_names,
-                  pg[i].output_shapes, pg[i].output_data_types,
-                  pg[i].output_data_formats, pg[i], pg[i].cpu_capability);
-                  */
-    // LOG(INFO) << " ** to run model : " << model_name[i];
     // RunModel(pg[i].model_name, pg[i].input_names, pg[i].input_shapes,
     //          pg[i].input_data_types, pg[i].input_data_formats,
     //          pg[i].output_names, pg[i].output_shapes, pg[i].output_data_types,
     //          pg[i].output_data_formats, pg[i], pg[i].cpu_capability);
   }
-  for (int i = 0; i < threads.size(); ++i) threads[i].join();
+  for (int i = 0; i < threads.size(); ++i) 
+    threads[i].join();
 
   return 0;
 }
