@@ -979,20 +979,28 @@ int MultipleModels(int argc, char **argv)
     LOG(INFO) << "opencl_queue_window_size: "
               << getenv("MACE_OPENCL_QUEUE_WINDOW_SIZE");
   }
+  std::vector<std::thread> threads(model_name.size());
   for (int i = 0; i < model_name.size(); ++i)
   {
+    threads[i] = std::thread(RunModel, pg[i].model_name, pg[i].input_names,
+                  pg[i].input_shapes, pg[i].input_data_types,
+                  pg[i].input_data_formats, pg[i].output_names,
+                  pg[i].output_shapes, pg[i].output_data_types,
+                  pg[i].output_data_formats, pg[i], pg[i].cpu_capability);
+                  /*
     std::thread t(RunModel, pg[i].model_name, pg[i].input_names,
                   pg[i].input_shapes, pg[i].input_data_types,
                   pg[i].input_data_formats, pg[i].output_names,
                   pg[i].output_shapes, pg[i].output_data_types,
                   pg[i].output_data_formats, pg[i], pg[i].cpu_capability);
+                  */
     // LOG(INFO) << " ** to run model : " << model_name[i];
     // RunModel(pg[i].model_name, pg[i].input_names, pg[i].input_shapes,
     //          pg[i].input_data_types, pg[i].input_data_formats,
     //          pg[i].output_names, pg[i].output_shapes, pg[i].output_data_types,
     //          pg[i].output_data_formats, pg[i], pg[i].cpu_capability);
-    t.join();
   }
+  for (int i = 0; i < threads.size(); ++i) threads[i].join();
 
   return 0;
 }
