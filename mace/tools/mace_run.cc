@@ -673,7 +673,7 @@ bool RunModel(const std::string &model_name,
     double model_run_millis = -1;
     benchmark::OpStat op_stat;
     if (FLAGS_round > 0) {
-      LOG(INFO) << "Run model";
+      LOG(INFO) << "Run model: " << model_name;
       int64_t total_run_duration = 0;
       for (int i = 0; i < FLAGS_round; ++i) {
         std::unique_ptr<port::Logger> info_log;
