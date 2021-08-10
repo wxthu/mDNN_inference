@@ -44,6 +44,10 @@ class BaseNet {
   virtual MaceStatus Run(RunMetadata *run_metadata = nullptr,
                          bool fake_warmup = false) = 0;
 
+  virtual MaceStatus Run(size_t startIdx, size_t endIdx,
+                         RunMetadata *run_metadata = nullptr,
+                         bool fake_warmup = false) = 0;
+
   virtual MaceStatus AllocateIntermediateBuffer() = 0;
 
  protected:

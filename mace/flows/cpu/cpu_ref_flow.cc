@@ -78,6 +78,17 @@ MaceStatus CpuRefFlow::Run(TensorMap *input_tensors,
   return net_->Run(run_metadata, false);
 }
 
+MaceStatus CpuRefFlow::Run(TensorMap *input_tensors,
+                           TensorMap *output_tensors,
+                           size_t startIdx, size_t endIdx,
+                           RunMetadata *run_metadata) {
+  VLOG(1) << "CpuRefFlow::Run";
+  MACE_UNUSED(input_tensors);
+  MACE_UNUSED(output_tensors);
+  LOG(INFO) << "Partial-version Cpu reference flow ...";
+  return net_->Run(startIdx, endIdx, run_metadata, false);
+}
+
 MaceStatus CpuRefFlow::GetInputTransposeDims(
     const std::pair<const std::string, MaceTensor> &input,
     const Tensor *input_tensor,

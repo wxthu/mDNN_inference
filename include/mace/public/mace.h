@@ -573,9 +573,18 @@ class MACE_API MaceEngine {
 
   MaceStatus Run(const std::map<std::string, MaceTensor> &inputs,
                  std::map<std::string, MaceTensor> *outputs);
+  
+  MaceStatus Run(const std::map<std::string, MaceTensor> &inputs,
+                 std::map<std::string, MaceTensor> *outputs,
+                 size_t startIdx, size_t endIdx);
 
   MaceStatus Run(const std::map<std::string, MaceTensor> &inputs,
                  std::map<std::string, MaceTensor> *outputs,
+                 RunMetadata *run_metadata);
+
+  MaceStatus Run(const std::map<std::string, MaceTensor> &inputs,
+                 std::map<std::string, MaceTensor> *outputs,
+                 size_t startIdx, size_t endIdx,
                  RunMetadata *run_metadata);
 
   /// \brief Release intermediate buffer for layers' activations
