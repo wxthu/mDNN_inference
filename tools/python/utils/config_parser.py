@@ -107,6 +107,7 @@ class ModelKeys(object):
     order = 'order'
     validation_inputs_data = "validation_inputs_data"
     validation_outputs_data = 'validation_outputs_data'
+    op_nums = "op_nums"
 
 
 class DataFormat(Enum):

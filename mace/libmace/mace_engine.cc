@@ -153,7 +153,7 @@ MaceStatus MaceEngine::Impl::Run(
     std::map<std::string, MaceTensor> *outputs,
     RunMetadata *run_metadata,
     size_t startIdx, size_t endIdx) {
-  LOG(INFO) << "Run Partial-Version Impl Engine ...";
+  LOG(INFO) << "Run Partial-version Impl Engine ...";
   return engine_->Forward(inputs, outputs, run_metadata, startIdx, endIdx);
 }
 

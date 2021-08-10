@@ -73,7 +73,8 @@ class ParamGroups {
         model_file(g.model_file),
         accelerator_binary_file(g.accelerator_binary_file),
         accelerator_storage_file(g.accelerator_storage_file),
-        mace_env_var(g.mace_env_var) {}
+        mace_env_var(g.mace_env_var), 
+        op_nums(g.op_nums) {}
   ~ParamGroups() = default;
 
   std::string model_name;
@@ -94,6 +95,7 @@ class ParamGroups {
   std::string accelerator_binary_file;
   std::string accelerator_storage_file;
   std::string mace_env_var;
+  std::string op_nums;
 };
 
 class InputParams {
@@ -101,11 +103,11 @@ class InputParams {
   InputParams(std::string model_name_, std::vector<std::string> input_names_, std::vector<std::vector<int64_t>> input_shapes_, 
               std::vector<IDataType> input_data_types_, std::vector<DataFormat> input_data_formats_, std::vector<std::string> output_names_,
               std::vector<std::vector<int64_t>> output_shapes_, std::vector<IDataType> output_data_types_, 
-              std::vector<DataFormat> output_data_formats_, float cpu_cap_)
+              std::vector<DataFormat> output_data_formats_, float cpu_cap_, int op_nums_)
               : model_name(model_name_), input_names(input_names_), input_shapes(input_shapes_), 
                 input_data_types(input_data_types_), input_data_formats(input_data_formats_), output_names(output_names_),
                 output_shapes(output_shapes_), output_data_types(output_data_types_), output_data_formats(output_data_formats_),
-                cpu_capability(cpu_cap_) {}
+                cpu_capability(cpu_cap_), op_nums(op_nums_) {}
   ~InputParams() = default;
 
   std::string model_name;
@@ -117,9 +119,10 @@ class InputParams {
   std::vector<std::vector<int64_t>> output_shapes;
   std::vector<IDataType> output_data_types;
   std::vector<DataFormat> output_data_formats;
-  ParamGroups* cmd_line;
+  ParamGroups *cmd_line;
   // std::unique_ptr<ParamGroups> cmd_line;
   float cpu_capability;
+  int op_nums;
 };
 
 void ParseShape(const std::string &str, std::vector<int64_t> *shape) {
@@ -235,6 +238,7 @@ DEFINE_string(
     accelerator_storage_file,
     "",
     "accelerator init cache path, used when store accelerator init cache");
+DEFINE_string(op_nums, "0", "total op numbers in model, it should be read from .yml file !!");
 DEFINE_int32(round, 1, "round");
 DEFINE_int32(restart_round, 1, "restart round");
 DEFINE_int32(malloc_check_cycle, -1, "malloc debug check cycle, -1 to disable");
@@ -871,7 +875,7 @@ int Main(int argc, char **argv, ParamGroups& command, std::vector<InputParams>& 
   InputParams tmp(command.model_name, input_names, input_shape_vec,
                   input_data_types, input_data_formats, output_names,
                   output_shape_vec, output_data_types, output_data_formats,
-                  cpu_float32_performance);
+                  cpu_float32_performance, stoi(command.op_nums));
   tmp.cmd_line = &command;
   // tmp.cmd_line = make_unique<ParamGroups>(command);
   configs.emplace_back(tmp);
@@ -885,7 +889,6 @@ int MultipleModels(int argc, char **argv)
       + " --help";
   gflags::SetUsageMessage(usage);
   gflags::ParseCommandLineFlags(&argc, &argv, true);
-
   // parameters group
   std::vector<ParamGroups> commands;
   std::vector<InputParams> pg;
@@ -916,6 +919,7 @@ int MultipleModels(int argc, char **argv)
       Split(FLAGS_accelerator_storage_file, '&');
   std::vector<std::string> mace_env_var =
       Split(std::string(getenv("MACE_INTERNAL_STORAGE_PATH")), '&');
+  std::vector<std::string> op_nums = Split(FLAGS_op_nums, '&');
 
   for (size_t i = 0; i < model_name.size(); ++i)
   {
@@ -946,6 +950,7 @@ int MultipleModels(int argc, char **argv)
     bucket.accelerator_storage_file =
         accelerator_storage_file.empty() ? "" : accelerator_storage_file[i];
     bucket.mace_env_var = mace_env_var.empty() ? "" : mace_env_var[i];
+    bucket.op_nums = op_nums.empty() ? "" : op_nums[i];
 
     commands.emplace_back(std::move(bucket));
   }
@@ -985,10 +990,6 @@ int MultipleModels(int argc, char **argv)
                   pg[i].input_data_formats, pg[i].output_names,
                   pg[i].output_shapes, pg[i].output_data_types,
                   pg[i].output_data_formats, pg[i], pg[i].cpu_capability);
-    // RunModel(pg[i].model_name, pg[i].input_names, pg[i].input_shapes,
-    //          pg[i].input_data_types, pg[i].input_data_formats,
-    //          pg[i].output_names, pg[i].output_shapes, pg[i].output_data_types,
-    //          pg[i].output_data_formats, pg[i], pg[i].cpu_capability);
   }
   for (int i = 0; i < threads.size(); ++i) 
     threads[i].join();
