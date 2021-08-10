@@ -115,6 +115,50 @@ MaceStatus BaseFlow::Run(const std::map<std::string, MaceTensor> &inputs,
   return MaceStatus::MACE_SUCCESS;
 }
 
+MaceStatus BaseFlow::Run(const std::map<std::string, MaceTensor> &inputs,
+                         std::map<std::string, MaceTensor> *outputs,
+                         size_t startIdx, size_t endIdx,
+                         RunMetadata *run_metadata) {
+  MACE_CHECK_NOTNULL(outputs);
+  TensorMap input_tensors;
+  TensorMap output_tensors;
+  LOG(INFO) << "Partial-version BaseFlow begin to run ...";
+  // Create and Transpose input tensors
+  for (auto &input : inputs) {
+    if (input_info_map_.find(input.first) == input_info_map_.end()) {
+      LOG(FATAL) << "'" << input.first
+                 << "' does not belong to model's inputs: "
+                 << MakeString(MapKeys(input_info_map_));
+    }
+    Tensor *input_tensor = ws_->GetTensor(input.first);
+    MACE_RETURN_IF_ERROR(TransposeInput(input, input_tensor));
+    input_tensors[input.first] = input_tensor;
+  }
+  
+  // Create output tensors
+  for (auto &output : *outputs) {
+    if (output_info_map_.find(output.first) == output_info_map_.end()) {
+      LOG(FATAL) << "'" << output.first
+                 << "' does not belong to model's outputs: "
+                 << MakeString(MapKeys(output_info_map_));
+    }
+    Tensor *output_tensor = ws_->GetTensor(output.first);
+    output_tensors[output.first] = output_tensor;
+  }
+  
+  // Run Model
+  MACE_RETURN_IF_ERROR(Run(&input_tensors, &output_tensors, startIdx, endIdx, run_metadata));
+  LOG(INFO) << "Begin to transpose Outputs (Partial-version) ...";
+  // Transpose output tensors
+  for (auto &output : *outputs) {
+    Tensor *output_tensor = ws_->GetTensor(output.first);
+    // save output
+    MACE_RETURN_IF_ERROR(TransposeOutput(*output_tensor, &output));
+  }
+
+  return MaceStatus::MACE_SUCCESS;
+}
+
 MaceStatus BaseFlow::FakeWarmup() {
   return MaceStatus::MACE_SUCCESS;
 }

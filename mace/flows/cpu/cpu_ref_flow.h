@@ -36,6 +36,10 @@ class CpuRefFlow : public CommonFp32Flow {
 
   MaceStatus Run(TensorMap *input_tensors, TensorMap *output_tensors,
                  RunMetadata *run_metadata) override;
+
+  MaceStatus Run(TensorMap *input_tensors, TensorMap *output_tensors,
+                 size_t startIdx, size_t endIdx,
+                 RunMetadata *run_metadata) override;
  protected:
   MaceStatus GetInputTransposeDims(
       const std::pair<const std::string, MaceTensor> &input,

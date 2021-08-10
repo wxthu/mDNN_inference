@@ -132,6 +132,16 @@ MaceStatus OpenclRefFlow::Run(TensorMap *input_tensors,
   return MaceStatus::MACE_SUCCESS;
 }
 
+MaceStatus OpenclRefFlow::Run(TensorMap *input_tensors,
+                              TensorMap *output_tensors,
+                              size_t startIdx, size_t endIdx,
+                              RunMetadata *run_metadata) {
+  MACE_RETURN_IF_ERROR(CpuRefFlow::Run(input_tensors, output_tensors, 
+                                       startIdx, endIdx, run_metadata));
+  AfterRun();
+  return MaceStatus::MACE_SUCCESS;
+}
+
 MaceStatus OpenclRefFlow::FakeWarmup() {
   MACE_RETURN_IF_ERROR(net_->Run(nullptr, true));
   AfterRun();

@@ -114,6 +114,39 @@ MaceStatus SerialEngine::Run(
   return MaceStatus::MACE_SUCCESS;
 }
 
+MaceStatus SerialEngine::Run(
+    const std::map<std::string, MaceTensor> &inputs,
+    std::map<std::string, MaceTensor> *outputs,
+    RunMetadata *run_metadata,
+    size_t startIdx, size_t endIdx) {
+  LOG(INFO) << "Serial Engine run ...";
+  // replace the input and output tensors
+  for (auto iter = inputs.begin(); iter != inputs.end(); ++iter) {
+    (*(run_helper_[iter->first]))[iter->first] = iter->second;
+  }
+  for (auto iter = outputs->begin(); iter != outputs->end(); ++iter) {
+    (*(run_helper_[iter->first]))[iter->first] = iter->second;
+  }
+
+  auto flow_num = flows_.size();
+  for (size_t i = 0; i < flow_num; ++i) {
+    auto *flow = flows_[i].get();
+    VLOG(1) << "start run flow: " << flow->GetName();
+    auto ret = flow->Run(*(input_tensors_[flow]), output_tensors_[flow].get(),
+                         startIdx, endIdx, run_metadata);
+    MACE_RETURN_IF_ERROR(ret);
+  }
+
+  for (auto iter = inputs.begin(); iter != inputs.end(); ++iter) {
+    run_helper_[iter->first]->erase(iter->first);
+  }
+  for (auto iter = outputs->begin(); iter != outputs->end(); ++iter) {
+    run_helper_[iter->first]->erase(iter->first);
+  }
+
+  return MaceStatus::MACE_SUCCESS;
+}
+
 MaceStatus SerialEngine::AfterRun() {
   for (auto iter = runtimes_.begin(); iter != runtimes_.end(); ++iter) {
     iter->second->OnIntermediateBufferUsed(this);

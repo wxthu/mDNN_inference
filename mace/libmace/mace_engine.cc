@@ -64,6 +64,11 @@ class MaceEngine::Impl {
                  std::map<std::string, MaceTensor> *outputs,
                  RunMetadata *run_metadata);
 
+  MaceStatus Run(const std::map<std::string, MaceTensor> &inputs,
+                 std::map<std::string, MaceTensor> *outputs,
+                 RunMetadata *run_metadata,
+                 size_t startIdx, size_t endIdx);
+
   MaceStatus ReleaseIntermediateBuffer();
 
   std::vector<RuntimeType> GetRuntimeTypes();
@@ -143,6 +148,15 @@ MaceStatus MaceEngine::Impl::Run(
   return engine_->Forward(inputs, outputs, run_metadata);
 }
 
+MaceStatus MaceEngine::Impl::Run(
+    const std::map<std::string, MaceTensor> &inputs,
+    std::map<std::string, MaceTensor> *outputs,
+    RunMetadata *run_metadata,
+    size_t startIdx, size_t endIdx) {
+  LOG(INFO) << "Run Partial-Version Impl Engine ...";
+  return engine_->Forward(inputs, outputs, run_metadata, startIdx, endIdx);
+}
+
 MaceStatus MaceEngine::Impl::ReleaseIntermediateBuffer() {
   return engine_->ReleaseIntermediateBuffer();
 }
@@ -209,9 +223,24 @@ MaceStatus MaceEngine::Run(const std::map<std::string, MaceTensor> &inputs,
 }
 
 MaceStatus MaceEngine::Run(const std::map<std::string, MaceTensor> &inputs,
+                           std::map<std::string, MaceTensor> *outputs,
+                           size_t startIdx, size_t endIdx,
+                           RunMetadata *run_metadata) {
+  LOG(INFO) << "Run Partial-version Metadata Engine ...";
+  return impl_->Run(inputs, outputs, run_metadata, startIdx, endIdx);
+}
+
+MaceStatus MaceEngine::Run(const std::map<std::string, MaceTensor> &inputs,
                            std::map<std::string, MaceTensor> *outputs) {
   LOG(INFO) << "Run Engine Success !";
   return impl_->Run(inputs, outputs, nullptr);
+}
+
+MaceStatus MaceEngine::Run(const std::map<std::string, MaceTensor> &inputs,
+                           std::map<std::string, MaceTensor> *outputs,
+                           size_t startIdx, size_t endIdx) {
+  LOG(INFO) << "Run Partial-version Engine Success !";
+  return impl_->Run(inputs, outputs, nullptr, startIdx, endIdx);
 }
 
 // Deprecated, will be removed in future version.

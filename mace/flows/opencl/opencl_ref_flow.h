@@ -31,6 +31,10 @@ class OpenclRefFlow : public CpuRefFlow {
   MaceStatus Run(TensorMap *input_tensors,
                  TensorMap *output_tensors,
                  RunMetadata *run_metadata) override;
+  MaceStatus Run(TensorMap *input_tensors,
+                 TensorMap *output_tensors,
+                 size_t startIdx, size_t endIdx,
+                 RunMetadata *run_metadata) override;
   MaceStatus FakeWarmup() override;
 
  protected:
