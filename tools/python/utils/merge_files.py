@@ -1,3 +1,4 @@
+from os import replace
 import re
 
 def merge_files(file1, file2, output=None):
@@ -20,6 +21,8 @@ def merge_files(file1, file2, output=None):
             
             param1 = param1.replace("'","")
             param1 = param1.replace('"',"")
+            param1 = param1.replace('[', "")
+            param1 = param1.replace(']', "")   # hard code for reading operator numbers : op_nums
             param1 = param1.split('=')
             param1 = param1[0] + "='" + param1[1] + "'"  
         cmd.append(param1)
@@ -30,4 +33,24 @@ def merge_files(file1, file2, output=None):
         output = "command.sh"
         
     with open(output, "w") as cmd_file:
+        cmd_file.write(results)
+        
+def normalize_file(file, output=None):
+    with open(file,'r') as f:
+        strm = f.readline()
+        
+    strm = strm.split()
+    
+    cmd = []
+    for elt in strm:
+        elt = elt.replace('[', "")
+        elt = elt.replace(']', "")  # hard code for reading operator numbers : op_nums
+        cmd.append(elt)
+        
+    results = " ".join(tuple(cmd))
+    
+    if output is None:
+        output = "command.sh"
+        
+    with open(output, 'w') as cmd_file:
         cmd_file.write(results)

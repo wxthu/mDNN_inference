@@ -36,7 +36,7 @@ from utils.util import mace_check
 import run_target
 import validate
 
-from utils.merge_files import merge_files
+from utils.merge_files import merge_files, normalize_file
 import shutil
 
 """
@@ -95,17 +95,17 @@ def run_models_for_device(flags, args, dev):
         index += 1
     
     # merge .sh files
+    cmd_file_path = "cmd.sh"
     if index > 1:
         for i in range (2, index + 1):
             file1 = "cmd" + str(i-1) + ".sh"
             file2 = "cmd" + str(i) + ".sh"
             merge_files(file1, file2, file2)
             
-        shutil.copy(file2, "cmd.sh")
+        shutil.copy(file2, cmd_file_path)
     else: 
-        shutil.copy("cmd1.sh", "cmd.sh")
+        normalize_file("cmd1.sh", cmd_file_path)
         
-    cmd_file_path = "cmd.sh"
     target_dir = "/data/local/tmp/mace_run"
     dev.run_more(cmd_file_path, target_dir)
     
@@ -162,7 +162,13 @@ def run_model_for_device(flags, args, dev, model_name, model_conf, index):
         model_conf[ModelKeys.subgraphs], model_conf[ModelKeys.input_tensors])
     output_tensors_info = config_parser.find_output_tensors_info(
         model_conf[ModelKeys.subgraphs], model_conf[ModelKeys.output_tensors])
-
+    
+    # nums is a list containing only one element
+    if ModelKeys.op_nums in model_conf["subgraphs"]["default_graph"].keys():
+        num = model_conf["subgraphs"]["default_graph"][ModelKeys.op_nums];
+    else:
+        num = [0]
+    
     model_args = {"model_name": model_name,
                   "model_file": model_file_path,
                   "model_data_file": model_data_file_path,
@@ -179,7 +185,8 @@ def run_model_for_device(flags, args, dev, model_name, model_conf, index):
                        input_tensors_info[ModelKeys.input_data_formats]]),
                   "output_data_format": ",".join(
                       [df.name for df in
-                       output_tensors_info[ModelKeys.output_data_formats]])
+                       output_tensors_info[ModelKeys.output_data_formats]]),
+                  "op_nums" : num
                   }
 
     opts = ["--%s='%s'" % (arg_key, arg_val) for arg_key, arg_val in
