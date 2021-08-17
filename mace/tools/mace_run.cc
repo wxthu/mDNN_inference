@@ -600,7 +600,7 @@ bool RunModel(const std::string &model_name,
               input_data_types[i], inputs[input_names[i]].data<char>());
         }
 
-        if (op_nums == 0 || s_Idx == e_Idx) {
+        if (s_Idx == e_Idx) {
           engine->Run(inputs, &outputs);
         } else {
           engine->Run(inputs, &outputs, s_Idx, e_Idx);
@@ -635,7 +635,7 @@ bool RunModel(const std::string &model_name,
     while (true) {
       int64_t t3 = NowMicros();
       MaceStatus warmup_status =
-          (op_nums == 0 || s_Idx == e_Idx)
+          s_Idx == e_Idx
               ? engine->Run(inputs, &outputs)
               : engine->Run(inputs, &outputs, s_Idx, e_Idx);
       LOG(INFO) << "Warm up finished";
@@ -705,7 +705,7 @@ bool RunModel(const std::string &model_name,
         while (true) {
           int64_t t0 = NowMicros();
           run_status =
-              (op_nums == 0 || s_Idx == e_Idx)
+              s_Idx == e_Idx
                   ? engine->Run(inputs, &outputs, metadata_ptr)
                   : engine->Run(inputs, &outputs, s_Idx, e_Idx, metadata_ptr);
           if (run_status != MaceStatus::MACE_SUCCESS) {

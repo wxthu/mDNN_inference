@@ -242,9 +242,10 @@ MaceStatus SerialNet::Run(size_t startIdx, size_t endIdx,
   OpContext context(ws_, cpu_runtime_);
   context.set_fake_warmup(fake_warmup);
 
-  auto ops_num = operators_.size();
-  MACE_CHECK(startIdx >= 0 && startIdx < endIdx && endIdx < ops_num,
-             "Op index out of range !!!");
+  if (endIdx > operators_.size()) {
+    endIdx = operators_.size();
+  }
+  MACE_CHECK(startIdx >= 0 && startIdx < endIdx, "Op index out of range !!!");
 
   for (auto iter = operators_.begin() + startIdx; iter != operators_.begin() + endIdx; ++iter) {
     auto &op = *iter;
