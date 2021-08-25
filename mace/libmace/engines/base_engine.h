@@ -75,7 +75,7 @@ class BaseEngine {
   virtual MaceStatus Forward(const std::map<std::string, MaceTensor> &inputs,
                              std::map<std::string, MaceTensor> *outputs,
                              RunMetadata *run_metadata,
-                             size_t startIdx, size_t endIdx);
+                             int startIdx, int endIdx);
 
   virtual MaceStatus FakeWarmup();
 
@@ -93,7 +93,7 @@ class BaseEngine {
   virtual MaceStatus Run(const std::map<std::string, MaceTensor> &inputs,
                          std::map<std::string, MaceTensor> *outputs,
                          RunMetadata *run_metadata,
-                         size_t startIdx, size_t endIdx) = 0;
+                         int startIdx, int endIdx) = 0;
   virtual MaceStatus AfterRun();
 
  protected:

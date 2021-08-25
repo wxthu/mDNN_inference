@@ -59,7 +59,7 @@ class SerialEngine : public BaseEngine {
   MaceStatus Run(const std::map<std::string, MaceTensor> &inputs,
                  std::map<std::string, MaceTensor> *outputs,
                  RunMetadata *run_metadata,
-                 size_t startIdx, size_t endIdx) override;
+                 int startIdx, int endIdx) override;
   MaceStatus AfterRun() override;
   MaceStatus FakeWarmup() override;
 

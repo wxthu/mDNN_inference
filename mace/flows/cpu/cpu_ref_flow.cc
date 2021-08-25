@@ -80,7 +80,7 @@ MaceStatus CpuRefFlow::Run(TensorMap *input_tensors,
 
 MaceStatus CpuRefFlow::Run(TensorMap *input_tensors,
                            TensorMap *output_tensors,
-                           size_t startIdx, size_t endIdx,
+                           int startIdx, int endIdx,
                            RunMetadata *run_metadata) {
   VLOG(1) << "CpuRefFlow::Run";
   MACE_UNUSED(input_tensors);

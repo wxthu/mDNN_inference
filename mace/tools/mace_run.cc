@@ -399,7 +399,7 @@ bool RunModel(const std::string &model_name,
               const std::vector<IDataType> &output_data_types,
               const std::vector<DataFormat> &output_data_formats,
               const InputParams& params, float cpu_capability,
-              int op_nums = 0, int s_Idx = 0, int e_Idx = 0) {
+              int s_Idx = 0, int e_Idx = 0) {
   int64_t t0 = NowMicros();
   bool *model_data_unused = nullptr;
   MaceEngine *tutor = nullptr;
@@ -993,16 +993,16 @@ int MultipleModels(int argc, char **argv)
               << getenv("MACE_OPENCL_QUEUE_WINDOW_SIZE");
   }
   std::vector<std::thread> threads(model_name.size());
-  for (int i = 0; i < model_name.size(); ++i)
+  for (size_t i = 0; i < model_name.size(); ++i)
   {
     threads[i] = std::thread(RunModel, pg[i].model_name, pg[i].input_names,
                   pg[i].input_shapes, pg[i].input_data_types,
                   pg[i].input_data_formats, pg[i].output_names,
                   pg[i].output_shapes, pg[i].output_data_types,
                   pg[i].output_data_formats, pg[i], 
-                  pg[i].cpu_capability, pg[i].op_nums, 0, 0);  // have to explicitly assign value due to 'thread'
+                  pg[i].cpu_capability, 0, 0);  // have to explicitly assign value due to 'thread'
   }
-  for (int i = 0; i < threads.size(); ++i) 
+  for (size_t i = 0; i < threads.size(); ++i) 
     threads[i].join();
 
   return 0;

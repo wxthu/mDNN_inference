@@ -38,7 +38,7 @@ class CpuRefFlow : public CommonFp32Flow {
                  RunMetadata *run_metadata) override;
 
   MaceStatus Run(TensorMap *input_tensors, TensorMap *output_tensors,
-                 size_t startIdx, size_t endIdx,
+                 int startIdx, int endIdx,
                  RunMetadata *run_metadata) override;
  protected:
   MaceStatus GetInputTransposeDims(

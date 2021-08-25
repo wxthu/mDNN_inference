@@ -118,7 +118,7 @@ MaceStatus SerialEngine::Run(
     const std::map<std::string, MaceTensor> &inputs,
     std::map<std::string, MaceTensor> *outputs,
     RunMetadata *run_metadata,
-    size_t startIdx, size_t endIdx) {
+    int startIdx, int endIdx) {
   LOG(INFO) << "Serial Engine run ...";
   // replace the input and output tensors
   for (auto iter = inputs.begin(); iter != inputs.end(); ++iter) {

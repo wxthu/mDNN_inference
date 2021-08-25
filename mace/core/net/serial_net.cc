@@ -229,7 +229,7 @@ MaceStatus SerialNet::Run(RunMetadata *run_metadata,
   return MaceStatus::MACE_SUCCESS;
 }
 
-MaceStatus SerialNet::Run(size_t startIdx, size_t endIdx,
+MaceStatus SerialNet::Run(int startIdx, int endIdx,
                           RunMetadata *run_metadata, bool fake_warmup) {
   const char *profiling = getenv("MACE_OPENCL_PROFILING");
   bool enable_opencl_profiling =
