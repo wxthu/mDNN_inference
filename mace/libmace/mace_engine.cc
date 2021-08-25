@@ -67,7 +67,7 @@ class MaceEngine::Impl {
   MaceStatus Run(const std::map<std::string, MaceTensor> &inputs,
                  std::map<std::string, MaceTensor> *outputs,
                  RunMetadata *run_metadata,
-                 size_t startIdx, size_t endIdx);
+                 int startIdx, int endIdx);
 
   MaceStatus ReleaseIntermediateBuffer();
 
@@ -152,7 +152,7 @@ MaceStatus MaceEngine::Impl::Run(
     const std::map<std::string, MaceTensor> &inputs,
     std::map<std::string, MaceTensor> *outputs,
     RunMetadata *run_metadata,
-    size_t startIdx, size_t endIdx) {
+    int startIdx, int endIdx) {
   LOG(INFO) << "Run Partial-version Impl Engine ...";
   return engine_->Forward(inputs, outputs, run_metadata, startIdx, endIdx);
 }
@@ -224,7 +224,7 @@ MaceStatus MaceEngine::Run(const std::map<std::string, MaceTensor> &inputs,
 
 MaceStatus MaceEngine::Run(const std::map<std::string, MaceTensor> &inputs,
                            std::map<std::string, MaceTensor> *outputs,
-                           size_t startIdx, size_t endIdx,
+                           int startIdx, int endIdx,
                            RunMetadata *run_metadata) {
   LOG(INFO) << "Run Partial-version Metadata Engine ...";
   return impl_->Run(inputs, outputs, run_metadata, startIdx, endIdx);
@@ -238,7 +238,7 @@ MaceStatus MaceEngine::Run(const std::map<std::string, MaceTensor> &inputs,
 
 MaceStatus MaceEngine::Run(const std::map<std::string, MaceTensor> &inputs,
                            std::map<std::string, MaceTensor> *outputs,
-                           size_t startIdx, size_t endIdx) {
+                           int startIdx, int endIdx) {
   LOG(INFO) << "Run Partial-version Engine Success !";
   return impl_->Run(inputs, outputs, nullptr, startIdx, endIdx);
 }

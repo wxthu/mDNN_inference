@@ -117,7 +117,7 @@ MaceStatus BaseFlow::Run(const std::map<std::string, MaceTensor> &inputs,
 
 MaceStatus BaseFlow::Run(const std::map<std::string, MaceTensor> &inputs,
                          std::map<std::string, MaceTensor> *outputs,
-                         size_t startIdx, size_t endIdx,
+                         int startIdx, int endIdx,
                          RunMetadata *run_metadata) {
   MACE_CHECK_NOTNULL(outputs);
   TensorMap input_tensors;

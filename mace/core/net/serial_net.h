@@ -43,7 +43,7 @@ class SerialNet : public BaseNet {
   MaceStatus Run(RunMetadata *run_metadata = nullptr,
                  bool fake_warmup = false) override;
   
-  MaceStatus Run(size_t startIdx, size_t endIdx,
+  MaceStatus Run(int startIdx, int endIdx,
                  RunMetadata *run_metadata = nullptr,
                  bool fake_warmup = false) override;
 

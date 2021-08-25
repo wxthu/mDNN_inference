@@ -194,7 +194,7 @@ MaceStatus BaseEngine::Forward(const std::map<std::string, MaceTensor> &inputs,
 MaceStatus BaseEngine::Forward(const std::map<std::string, MaceTensor> &inputs,
                                std::map<std::string, MaceTensor> *outputs,
                                RunMetadata *run_metadata,
-                               size_t startIdx, size_t endIdx) {
+                               int startIdx, int endIdx) {
   LOG(INFO) << " Begin Partial-version forward process ...";
   MACE_RETURN_IF_ERROR(BeforeRun());
   MACE_RETURN_IF_ERROR(Run(inputs, outputs, run_metadata, startIdx, endIdx));

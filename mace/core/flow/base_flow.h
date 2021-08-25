@@ -79,7 +79,7 @@ class BaseFlow {
 
   virtual MaceStatus Run(TensorMap *input_tensors,
                          TensorMap *output_tensors,
-                         size_t startIdx, size_t endIdx,
+                         int startIdx, int endIdx,
                          RunMetadata *run_metadata) = 0;
 
 
@@ -89,7 +89,7 @@ class BaseFlow {
 
   MaceStatus Run(const std::map<std::string, MaceTensor> &inputs,
                  std::map<std::string, MaceTensor> *outputs,
-                 size_t startIdx, size_t endIdx,
+                 int startIdx, int endIdx,
                  RunMetadata *run_metadata = nullptr);
   virtual MaceStatus FakeWarmup();
 

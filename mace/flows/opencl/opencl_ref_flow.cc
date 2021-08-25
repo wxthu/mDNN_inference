@@ -134,7 +134,7 @@ MaceStatus OpenclRefFlow::Run(TensorMap *input_tensors,
 
 MaceStatus OpenclRefFlow::Run(TensorMap *input_tensors,
                               TensorMap *output_tensors,
-                              size_t startIdx, size_t endIdx,
+                              int startIdx, int endIdx,
                               RunMetadata *run_metadata) {
   MACE_RETURN_IF_ERROR(CpuRefFlow::Run(input_tensors, output_tensors, 
                                        startIdx, endIdx, run_metadata));
