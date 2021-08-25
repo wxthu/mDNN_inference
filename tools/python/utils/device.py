@@ -119,6 +119,9 @@ class HostDevice(Device):
 
     def run(self, target):
         execute(str(target))
+        
+    def run_more(self, cmd_file_path, target_dir):
+        execute("sh " + cmd_file_path)
 
     def pull(self, target, out_dir):
         out_dir = os.path.abspath(out_dir)
