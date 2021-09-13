@@ -630,56 +630,56 @@ bool RunModel(const std::string &model_name,
         prefix, "\' in: ", params.cmd_line->input_dir,
         ", input file name should start with input tensor name.");
   } else {
-    LOG(INFO) << "Warm up run";
-    double warmup_millis;
-    while (true) {
-      int64_t t3 = NowMicros();
-      MaceStatus warmup_status =
-          s_Idx == e_Idx
-              ? engine->Run(inputs, &outputs)
-              : engine->Run(inputs, &outputs, s_Idx, e_Idx);
-      LOG(INFO) << "Warm up finished";
-      if (warmup_status != MaceStatus::MACE_SUCCESS) {
-        LOG(ERROR) << "Warmup runtime error, retry ... errcode: "
-                   << warmup_status.information();
-        do {
-#ifdef MODEL_GRAPH_FORMAT_CODE
-          create_engine_status =
-            CreateMaceEngineFromCode(model_name,
-                                     reinterpret_cast<const unsigned char *>(
-                                       model_weights_data->data()),
-                                     model_weights_data->length(),
-                                     input_names,
-                                     output_names,
-                                     config,
-                                     &engine,
-                                     model_data_unused,
-                                     tutor,
-                                     FLAGS_fake_warmup);
-#else
-          create_engine_status =
-              CreateMaceEngineFromProto(reinterpret_cast<const unsigned char *>(
-                                            model_graph_data->data()),
-                                        model_graph_data->length(),
-                                        reinterpret_cast<const unsigned char *>(
-                                            model_weights_data->data()),
-                                        model_weights_data->length(),
-                                        input_names,
-                                        output_names,
-                                        config,
-                                        &engine,
-                                        model_data_unused,
-                                        tutor,
-                                        FLAGS_fake_warmup);
-#endif
-        } while (create_engine_status != MaceStatus::MACE_SUCCESS);
-      } else {
-        int64_t t4 = NowMicros();
-        warmup_millis = (t4 - t3) / 1000.0;
-        LOG(INFO) << "1st warm up run latency: " << warmup_millis << " ms";
-        break;
-      }
-    }
+//     LOG(INFO) << "Warm up run";
+//     double warmup_millis;
+//     while (true) {
+//       int64_t t3 = NowMicros();
+//       MaceStatus warmup_status =
+//           s_Idx == e_Idx
+//               ? engine->Run(inputs, &outputs)
+//               : engine->Run(inputs, &outputs, s_Idx, e_Idx);
+//       LOG(INFO) << "Warm up finished";
+//       if (warmup_status != MaceStatus::MACE_SUCCESS) {
+//         LOG(ERROR) << "Warmup runtime error, retry ... errcode: "
+//                    << warmup_status.information();
+//         do {
+// #ifdef MODEL_GRAPH_FORMAT_CODE
+//           create_engine_status =
+//             CreateMaceEngineFromCode(model_name,
+//                                      reinterpret_cast<const unsigned char *>(
+//                                        model_weights_data->data()),
+//                                      model_weights_data->length(),
+//                                      input_names,
+//                                      output_names,
+//                                      config,
+//                                      &engine,
+//                                      model_data_unused,
+//                                      tutor,
+//                                      FLAGS_fake_warmup);
+// #else
+//           create_engine_status =
+//               CreateMaceEngineFromProto(reinterpret_cast<const unsigned char *>(
+//                                             model_graph_data->data()),
+//                                         model_graph_data->length(),
+//                                         reinterpret_cast<const unsigned char *>(
+//                                             model_weights_data->data()),
+//                                         model_weights_data->length(),
+//                                         input_names,
+//                                         output_names,
+//                                         config,
+//                                         &engine,
+//                                         model_data_unused,
+//                                         tutor,
+//                                         FLAGS_fake_warmup);
+// #endif
+//         } while (create_engine_status != MaceStatus::MACE_SUCCESS);
+//       } else {
+//         int64_t t4 = NowMicros();
+//         warmup_millis = (t4 - t3) / 1000.0;
+//         LOG(INFO) << "1st warm up run latency: " << warmup_millis << " ms";
+//         break;
+//       }
+//     }
 
     double model_run_millis = -1;
     benchmark::OpStat op_stat;
@@ -777,7 +777,7 @@ bool RunModel(const std::string &model_name,
     printf("     capability(CPU)        init      warmup     run_avg\n");
     printf("========================================================\n");
     printf("time %15.3f %11.3f %11.3f %11.3f\n",
-           cpu_capability, init_millis, warmup_millis, model_run_millis);
+           cpu_capability, init_millis, 0.0, model_run_millis);
     if (FLAGS_benchmark) {
       op_stat.PrintStat();
     }
