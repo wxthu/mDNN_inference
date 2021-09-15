@@ -43,6 +43,11 @@
 #include "mace/utils/statistics.h"
 #include "mace/utils/transpose.h"
 
+#include <condition_variable>
+
+std::mutex mu;
+std::condition_variable cond;
+
 #ifdef MODEL_GRAPH_FORMAT_CODE
 #include "mace/codegen/engine/mace_engine_factory.h"
 #endif
@@ -398,8 +403,11 @@ bool RunModel(const std::string &model_name,
               const std::vector<std::vector<int64_t>> &output_shapes,
               const std::vector<IDataType> &output_data_types,
               const std::vector<DataFormat> &output_data_formats,
-              const InputParams& params, float cpu_capability,
-              int s_Idx = 0, int e_Idx = 0) {
+              const InputParams &params,
+              float cpu_capability,
+              int s_Idx = 0,
+              int e_Idx = 0,
+              size_t t_id = 0) {
   int64_t t0 = NowMicros();
   bool *model_data_unused = nullptr;
   MaceEngine *tutor = nullptr;
@@ -543,6 +551,13 @@ bool RunModel(const std::string &model_name,
   double init_millis = (t1 - t0) / 1000.0;
   LOG(INFO) << "Total init latency: " << init_millis << " ms";
   PrintRuntimes(engine->GetRuntimeTypes());
+
+  if (t_id != 0) {
+    std::unique_lock<std::mutex> locker(mu);
+    LOG(INFO) << "Waiting activation signal ...";
+    cond.wait(locker);
+    locker.unlock();
+  }
 
   const size_t input_count = input_names.size();
   const size_t output_count = output_names.size();
@@ -783,6 +798,13 @@ bool RunModel(const std::string &model_name,
     }
   }
 
+  if (t_id == 0) {
+    std::unique_lock<std::mutex> locker(mu);
+    cond.notify_one();
+    LOG(INFO) << "Release lock and notify waiting thread ...";
+    locker.unlock();
+  }
+
   return true;
 }
 
@@ -1000,7 +1022,7 @@ int MultipleModels(int argc, char **argv)
                   pg[i].input_data_formats, pg[i].output_names,
                   pg[i].output_shapes, pg[i].output_data_types,
                   pg[i].output_data_formats, pg[i], 
-                  pg[i].cpu_capability, 0, 0);  // have to explicitly assign value due to 'thread'
+                  pg[i].cpu_capability, 0, 0, i);  // have to explicitly assign value due to 'thread'
   }
   for (size_t i = 0; i < threads.size(); ++i) 
     threads[i].join();
