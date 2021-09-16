@@ -1015,8 +1015,8 @@ int MultipleModels(int argc, char **argv)
               << getenv("MACE_OPENCL_QUEUE_WINDOW_SIZE");
   }
   std::vector<std::thread> threads(model_name.size());
-  for (size_t i = 0; i < model_name.size(); ++i)
-  {
+  int64_t now1 = NowMicros();
+  for (size_t i = 0; i < model_name.size(); ++i) {
     threads[i] = std::thread(RunModel, pg[i].model_name, pg[i].input_names,
                   pg[i].input_shapes, pg[i].input_data_types,
                   pg[i].input_data_formats, pg[i].output_names,
@@ -1027,6 +1027,9 @@ int MultipleModels(int argc, char **argv)
   for (size_t i = 0; i < threads.size(); ++i) 
     threads[i].join();
 
+  int64_t now2 = NowMicros();
+  double sums = (now2 - now1) / 1000.0;
+  LOG(INFO) << "execution time : " << sums;
   return 0;
 }
 
