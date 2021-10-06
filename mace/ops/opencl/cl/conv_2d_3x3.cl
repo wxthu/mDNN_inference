@@ -1,6 +1,6 @@
 #include <common.h>
 
-__kernel void conv_2d_3x3(OUT_OF_RANGE_PARAMS
+__kernel void _conv_2d_3x3(OUT_OF_RANGE_PARAMS
                           GLOBAL_WORK_GROUP_SIZE_DIM3
                           __read_only image2d_t input, /* [c%4 * w * c/4, h * b] */
                           __read_only image2d_t filter, /* cout%4 * cin , kh * kw * cout/4 */
@@ -167,4 +167,69 @@ __kernel void conv_2d_3x3(OUT_OF_RANGE_PARAMS
   WRITE_IMAGET(output,
                (int2)(out_x_base + w, out_hb),
                out4);
+}
+
+__kernel void conv_2d_3x3(OUT_OF_RANGE_PARAMS
+                          GLOBAL_WORK_GROUP_SIZE_DIM3
+                          __read_only image2d_t input, /* [c%4 * w * c/4, h * b] */
+                          __read_only image2d_t filter, /* cout%4 * cin , kh * kw * cout/4 */
+#ifdef BIAS
+                          __read_only image2d_t bias, /* cout%4 * cout/4 */
+#endif
+                          __write_only image2d_t output,
+                          __private const float relux_max_limit,
+                          __private const float activation_coefficient,
+                          __private const int in_height,
+                          __private const int in_width,
+                          __private const int in_ch_blks,
+                          __private const int out_height,
+                          __private const int out_width,
+                          __private const int stride_h,
+                          __private const int stride_w,
+                          __private const int padding_top,
+                          __private const int padding_left,
+                          __private const int dilation_h,
+                          __private const int dilation_w) {
+  for (int j = 0;j < 2;++j) {
+#ifdef BIAS
+    _conv_2d_3x3(OORPS
+                GWGSD3
+                input, /* [c%4 * w * c/4, h * b] */
+                filter, /* cout%4 * cin , kh * kw * cout/4 */
+                bias, /* cout%4 * cout/4 */
+                output,
+                relux_max_limit,
+                activation_coefficient,
+                in_height,
+                in_width,
+                in_ch_blks,
+                out_height,
+                out_width,
+                stride_h,
+                stride_w,
+                padding_top,
+                padding_left,
+                dilation_h,
+                dilation_w);
+#else
+    _conv_2d_3x3(OORPS
+                GWGSD3
+                input, /* [c%4 * w * c/4, h * b] */
+                filter, /* cout%4 * cin , kh * kw * cout/4 */
+                output,
+                relux_max_limit,
+                activation_coefficient,
+                in_height,
+                in_width,
+                in_ch_blks,
+                out_height,
+                out_width,
+                stride_h,
+                stride_w,
+                padding_top,
+                padding_left,
+                dilation_h,
+                dilation_w);
+#endif
+  }
 }

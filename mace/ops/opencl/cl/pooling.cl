@@ -16,7 +16,7 @@ inline int calculate_avg_block_size(const int pool_size_h,
 }
 
 // Supported data type: half/float
-__kernel void pooling(OUT_OF_RANGE_PARAMS
+__kernel void _pooling(OUT_OF_RANGE_PARAMS
                       GLOBAL_WORK_GROUP_SIZE_DIM3
                       __read_only image2d_t input,
                       __private const int in_height,
@@ -97,4 +97,34 @@ __kernel void pooling(OUT_OF_RANGE_PARAMS
 
   const int pos = mad24(out_chan_idx, out_width, out_width_idx);
   WRITE_IMAGET(output, (int2)(pos, out_hb_idx), res);
+}
+
+__kernel void pooling(OUT_OF_RANGE_PARAMS
+                      GLOBAL_WORK_GROUP_SIZE_DIM3
+                      __read_only image2d_t input,
+                      __private const int in_height,
+                      __private const int in_width,
+                      __private const int out_height,
+                      __private const int pad_top,
+                      __private const int pad_left,
+                      __private const int stride_h,
+                      __private const int stride_w,
+                      __private const int pooling_size_h,
+                      __private const int pooling_size_w,
+                      __write_only image2d_t output) {
+  for (int j = 0; j < 2; j++) {
+    _pooling(OORPS 
+            GWGSD3
+            input,
+            in_height,
+            in_width,
+            out_height,
+            pad_top,
+            pad_left,
+            stride_h,
+            stride_w,
+            pooling_size_h,
+            pooling_size_w,
+            output);
+  }
 }

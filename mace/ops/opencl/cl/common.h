@@ -41,10 +41,18 @@
     __private const int global_size_dim1, \
     __private const int global_size_dim2,
 
+#define GWGSD3       \
+    global_size_dim0, \
+    global_size_dim1, \
+    global_size_dim2,
+
 // oorc for 'Out Of Range Check'
 #ifdef OUT_OF_RANGE_CHECK
 #define OUT_OF_RANGE_PARAMS \
   __global int *oorc_flag,
+
+#define OORPS \
+        oorc_flag,
 
 #define BUFFER_OUT_OF_RANGE_PARAMS      \
   __global int *oorc_flag,              \
@@ -57,6 +65,7 @@
   check_out_of_range_for_buffer(oorc_output_length, (idx), oorc_flag);
 #else
 #define OUT_OF_RANGE_PARAMS
+#define OORPS
 #define BUFFER_OUT_OF_RANGE_PARAMS
 #define CHECK_OUT_OF_RANGE_FOR_IMAGE2D(image, coord)
 #define CHECK_OUT_OF_RANGE_FOR_BUFFER(idx)

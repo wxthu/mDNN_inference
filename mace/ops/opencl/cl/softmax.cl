@@ -1,6 +1,6 @@
 #include <common.h>
 
-__kernel void softmax(OUT_OF_RANGE_PARAMS
+__kernel void _softmax(OUT_OF_RANGE_PARAMS
                       GLOBAL_WORK_GROUP_SIZE_DIM3
                       __read_only image2d_t input,
                       __private const int channels,
@@ -152,4 +152,20 @@ __kernel void softmax(OUT_OF_RANGE_PARAMS
   }
 
   WRITE_IMAGET(output, (int2)(pos, hb_idx), data_arr[0]);
+}
+
+__kernel void softmax(OUT_OF_RANGE_PARAMS
+                      GLOBAL_WORK_GROUP_SIZE_DIM3
+                      __read_only image2d_t input,
+                      __private const int channels,
+                      __private const int remain_channels,
+                      __write_only image2d_t output) {
+  for (int j = 0; j < 2; ++j) {
+    _softmax(OORPS
+            GWGSD3
+            input,
+            channels,
+            remain_channels,
+            output);
+  }
 }

@@ -236,7 +236,11 @@ MaceStatus SerialNet::Run(int startIdx, int endIdx,
       profiling != nullptr && strlen(profiling) == 1 && profiling[0] == '1';
   
   LOG(INFO) << "Begin Net inference (Partial-version)...";
-
+  if (endIdx < 0) {
+    LOG(INFO) << "mock two-identical-model kernel fusion and terminate inference ...";
+    return MaceStatus::MACE_SUCCESS;
+  }
+  
   MACE_MEMORY_LOGGING_GUARD();
   MACE_LATENCY_LOGGER(1, "Running net");
   OpContext context(ws_, cpu_runtime_);

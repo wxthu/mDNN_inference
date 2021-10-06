@@ -995,12 +995,13 @@ int MultipleModels(int argc, char **argv)
   std::vector<std::thread> threads(model_name.size());
   int64_t now1 = NowMicros();
   for (size_t i = 0; i < model_name.size(); ++i) {
+    int hint = i == 0 ? 0 : -1;    // hard code to mock kernel fusion in case of two identical models
     threads[i] = std::thread(RunModel, pg[i].model_name, pg[i].input_names,
                   pg[i].input_shapes, pg[i].input_data_types,
                   pg[i].input_data_formats, pg[i].output_names,
                   pg[i].output_shapes, pg[i].output_data_types,
                   pg[i].output_data_formats, pg[i], 
-                  pg[i].cpu_capability, 0, 0);  // have to explicitly assign value due to 'thread'
+                  pg[i].cpu_capability, 0, hint);  // have to explicitly assign value due to 'thread'
   }
   for (size_t i = 0; i < threads.size(); ++i) 
     threads[i].join();

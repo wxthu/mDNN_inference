@@ -137,7 +137,7 @@ __kernel void depthwise_conv2d(OUT_OF_RANGE_PARAMS
   WRITE_IMAGET(output, (int2)(out_x_base + w, out_hb), out3);
 }
 
-__kernel void depthwise_conv2d_s1(OUT_OF_RANGE_PARAMS
+__kernel void depthwise_conv2d_ss(OUT_OF_RANGE_PARAMS
                                   GLOBAL_WORK_GROUP_SIZE_DIM3
                                   __read_only image2d_t input, /* [c%4 * w * c/4, h * b] */
                                   __read_only image2d_t filter, /* cout%4 * kh * kw * m, cin/4 */
@@ -262,4 +262,63 @@ __kernel void depthwise_conv2d_s1(OUT_OF_RANGE_PARAMS
   w += 1;
   if (w >= out_width) return;
   WRITE_IMAGET(output, (int2)(out_x_base + w, out_hb), out3);
+}
+
+__kernel void depthwise_conv2d_s1(OUT_OF_RANGE_PARAMS
+                                  GLOBAL_WORK_GROUP_SIZE_DIM3
+                                  __read_only image2d_t input, /* [c%4 * w * c/4, h * b] */
+                                  __read_only image2d_t filter, /* cout%4 * kh * kw * m, cin/4 */
+#ifdef BIAS
+    __read_only image2d_t bias, /* cout%4 * cout/4 */
+#endif
+                                  __write_only image2d_t output,
+                                  __private const DATA_TYPE relux_max_limit,
+                                  __private const DATA_TYPE activation_coefficient,
+                                  __private const short in_height,
+                                  __private const short in_width,
+                                  __private const short in_ch_blks,
+                                  __private const short out_height,
+                                  __private const short out_width,
+                                  __private const short filter_height,
+                                  __private const short filter_width,
+                                  __private const short padding_top,
+                                  __private const short padding_left) {
+  for (int j = 0; j < 2; ++j) {
+#ifdef BIAS
+    depthwise_conv2d_ss(OORPS 
+                        GWGSD3
+                        input, /* [c%4 * w * c/4, h * b] */
+                        filter, /* cout%4 * kh * kw * m, cin/4 */
+                        bias, /* cout%4 * cout/4 */
+                        output,
+                        relux_max_limit,
+                        activation_coefficient,
+                        in_height,
+                        in_width,
+                        in_ch_blks,
+                        out_height,
+                        out_width,
+                        filter_height,
+                        filter_width,
+                        padding_top,
+                        padding_left);
+#else
+    depthwise_conv2d_ss(OORPS 
+                        GWGSD3
+                        input, /* [c%4 * w * c/4, h * b] */
+                        filter, /* cout%4 * kh * kw * m, cin/4 */
+                        output,
+                        relux_max_limit,
+                        activation_coefficient,
+                        in_height,
+                        in_width,
+                        in_ch_blks,
+                        out_height,
+                        out_width,
+                        filter_height,
+                        filter_width,
+                        padding_top,
+                        padding_left);
+#endif
+  }
 }
